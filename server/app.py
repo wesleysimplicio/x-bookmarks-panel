@@ -100,12 +100,14 @@ def api_executar(op_id: int):
         tipo = None
     criar = bool(body.get("criar_projeto"))
     com_github = bool(body.get("com_github"))
+    lang = body.get("lang") if body.get("lang") in ("en", "pt", "es") else "pt"
     try:
         result = executor.executar(
             op_id,
             tipo_override=tipo,
             criar_projeto_flag=criar,
             com_github=com_github,
+            lang=lang,
         )
     except Exception as e:
         return {"error": str(e)}, 500

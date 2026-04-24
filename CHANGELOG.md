@@ -6,6 +6,16 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 ## [Unreleased]
 
+## [0.2.0] — 2026-04-24
+
+### Added
+- Trilingual UI: English, Portuguese, and Spanish. Language picker in the header persists the choice in `localStorage`. Default is detected from `navigator.language` (falls back to English).
+- `lang` query field on `POST /api/oportunidades/<id>/executar` body. Propagates to `executor.executar()` and drives the generated prompt and the scaffolded `README.md` / `CLAUDE.md` language. Accepted values: `en`, `pt`, `es`. Default: `pt` (preserves existing callers).
+
+### Changed
+- `executor.montar_prompt`, `executor.criar_projeto`, and `executor.executar` now accept a `lang` keyword. Strings live in `PROMPT_I18N` and `SCAFFOLD_I18N` dicts.
+- `index.html` runs every user-facing string through an `I18N` dictionary + `t(key, params)` helper. Data fields (author, insight, suggested action, etc.) are never translated — they come from the source HTML as-is.
+
 ## [0.1.2] — 2026-04-24
 
 ### Changed
@@ -33,7 +43,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 - Documentation: `README.md`, `CLAUDE.md`, `DESIGN.md`, `CONTRIBUTING.md`.
 - `.gitignore` blocking user data (DB, triage HTML, logs, `.env`, `.venv`, captures, profile analyses, generated folders).
 
-[Unreleased]: https://github.com/wesleysimplicio/x-bookmarks-panel/compare/v0.1.2...HEAD
+[Unreleased]: https://github.com/wesleysimplicio/x-bookmarks-panel/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/wesleysimplicio/x-bookmarks-panel/compare/v0.1.2...v0.2.0
 [0.1.2]: https://github.com/wesleysimplicio/x-bookmarks-panel/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/wesleysimplicio/x-bookmarks-panel/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/wesleysimplicio/x-bookmarks-panel/releases/tag/v0.1.0

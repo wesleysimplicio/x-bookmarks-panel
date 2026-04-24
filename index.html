@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Painel · Esteira de Bookmarks</title>
+<title>X Bookmarks Panel</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -41,7 +41,6 @@
   }
   .container { max-width: 1280px; margin: 0 auto; }
 
-  /* HEADER */
   header { margin-bottom: 2.2rem; display: flex; justify-content: space-between; align-items: flex-end; gap: 1rem; flex-wrap: wrap; }
   .eyebrow {
     font-family: 'IBM Plex Mono', monospace;
@@ -54,17 +53,34 @@
     letter-spacing: -0.02em;
   }
   h1 em { font-style: italic; color: var(--accent); font-weight: 300; }
-  .header-actions { display: flex; gap: 0.5rem; align-items: center; }
+  .header-actions { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
   .btn-mini {
     font-family: 'IBM Plex Mono', monospace;
     font-size: 0.75rem; padding: 0.45rem 0.85rem;
     background: var(--bg-card); border: 1px solid var(--border);
     color: var(--text-dim); cursor: pointer;
     border-radius: 4px; transition: all 0.15s;
+    text-decoration: none;
   }
   .btn-mini:hover { color: var(--text); border-color: var(--text-faint); }
 
-  /* STATS */
+  .lang-picker {
+    display: flex; gap: 2px;
+    background: var(--border-soft);
+    border: 1px solid var(--border);
+    border-radius: 4px; overflow: hidden;
+  }
+  .lang-btn {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.7rem; font-weight: 500;
+    padding: 0.42rem 0.7rem;
+    background: var(--bg-card); border: none;
+    color: var(--text-faint); cursor: pointer;
+    transition: all 0.12s; letter-spacing: 0.08em;
+  }
+  .lang-btn:hover { color: var(--text-dim); }
+  .lang-btn.active { background: var(--accent); color: #111; font-weight: 600; }
+
   .stats {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
@@ -85,7 +101,6 @@
   .stat.archive .stat-value { color: var(--archive); }
   .stat.ok .stat-value { color: var(--ok); }
 
-  /* FILTROS */
   .filters {
     display: flex; flex-wrap: wrap; gap: 0.5rem;
     margin-bottom: 1rem; align-items: center;
@@ -104,7 +119,6 @@
   .chip:hover { color: var(--text); border-color: var(--text-faint); }
   .chip.active { background: var(--text); color: var(--bg); border-color: var(--text); }
 
-  /* CARDS */
   .cards { display: grid; gap: 0.9rem; }
   .card {
     background: var(--bg-card);
@@ -158,7 +172,6 @@
   .meta-line a { color: var(--text-dim); text-decoration: none; border-bottom: 1px dashed var(--border); }
   .meta-line a:hover { color: var(--accent); }
 
-  /* AÇÕES */
   .actions-bar {
     display: flex; gap: 0.5rem; flex-wrap: wrap;
     margin-top: 1rem;
@@ -182,7 +195,6 @@
   .btn-status:hover   { color: var(--text); border-color: var(--text-faint); }
   .btn.recommended { box-shadow: 0 0 0 2px rgba(232,199,122,0.18); }
 
-  /* checkbox inline */
   .check-row {
     display: flex; gap: 1rem; flex-wrap: wrap;
     margin-top: 0.7rem; font-family: 'IBM Plex Mono', monospace;
@@ -190,7 +202,6 @@
   }
   .check-row label { display: inline-flex; gap: 0.4rem; align-items: center; cursor: pointer; }
 
-  /* search bar */
   .search-row {
     display: flex; align-items: center; gap: 0.8rem;
     margin-bottom: 1rem;
@@ -215,14 +226,12 @@
     color: var(--text-faint);
     white-space: nowrap;
   }
-  /* destaca matches no card */
   mark.hl {
     background: rgba(232,199,122,0.25);
     color: var(--accent);
     padding: 0 2px; border-radius: 2px;
   }
 
-  /* progress flags (instalado / aplicado / projeto iniciado) */
   .flags {
     display: flex; gap: 0.4rem; flex-wrap: wrap;
     margin: 0.7rem 0 0.2rem;
@@ -248,7 +257,6 @@
   .flag.on:hover { background: rgba(106,194,123,0.18); }
   .flag .dot { display: inline-block; margin-right: 0.35rem; opacity: 0.8; }
 
-  /* TOAST */
   .toast {
     position: fixed; bottom: 2rem; left: 50%;
     transform: translateX(-50%) translateY(120%);
@@ -294,79 +302,309 @@
 
   <header>
     <div>
-      <div class="eyebrow">Painel local · http://localhost:8765</div>
-      <h1>Esteira de <em>oportunidades</em>.</h1>
+      <div class="eyebrow" data-i18n="header.eyebrow"></div>
+      <h1><span data-i18n="header.title.1"></span> <em data-i18n="header.title.2"></em>.</h1>
     </div>
     <div class="header-actions">
-      <button class="btn-mini" id="btn-reimport">Re-importar HTML</button>
-      <a class="btn-mini" href="/relatorio" target="_blank">Ver relatório</a>
+      <div class="lang-picker" id="lang-picker">
+        <button class="lang-btn" data-lang="en">EN</button>
+        <button class="lang-btn" data-lang="pt">PT</button>
+        <button class="lang-btn" data-lang="es">ES</button>
+      </div>
+      <button class="btn-mini" id="btn-reimport" data-i18n="btn.reimport"></button>
+      <a class="btn-mini" href="/relatorio" target="_blank" data-i18n="btn.report"></a>
     </div>
   </header>
 
-  <div id="offline-banner" class="offline" style="display:none;">
-    Server offline. Roda <code>./start.sh</code> na pasta bookmarks.
-  </div>
+  <div id="offline-banner" class="offline" style="display:none;"></div>
 
   <div class="stats" id="stats"></div>
 
   <div class="search-row">
-    <input id="search" type="search" placeholder="Buscar por título, descrição, autor, link…" autocomplete="off" />
+    <input id="search" type="search" autocomplete="off" />
     <span id="search-meta" class="search-meta"></span>
   </div>
 
   <div class="filters" id="filters">
-    <span class="filter-label">Prioridade</span>
-    <button class="chip active" data-filter="prioridade" data-value="">Tudo</button>
-    <button class="chip" data-filter="prioridade" data-value="agir-agora">🔥 Agir agora</button>
-    <button class="chip" data-filter="prioridade" data-value="estudar-depois">📚 Estudar depois</button>
-    <button class="chip" data-filter="prioridade" data-value="arquivar">🗄️ Arquivar</button>
+    <span class="filter-label" data-i18n="filter.priority"></span>
+    <button class="chip active" data-filter="prioridade" data-value="" data-i18n="filter.all"></button>
+    <button class="chip" data-filter="prioridade" data-value="agir-agora" data-i18n-emoji="🔥 " data-i18n="prio.agir-agora"></button>
+    <button class="chip" data-filter="prioridade" data-value="estudar-depois" data-i18n-emoji="📚 " data-i18n="prio.estudar-depois"></button>
+    <button class="chip" data-filter="prioridade" data-value="arquivar" data-i18n-emoji="🗄️ " data-i18n="prio.arquivar"></button>
   </div>
   <div class="filters" id="filters-status">
-    <span class="filter-label">Status</span>
-    <button class="chip active" data-filter="status" data-value="">Todos</button>
-    <button class="chip" data-filter="status" data-value="novo">Novo</button>
-    <button class="chip" data-filter="status" data-value="em_progresso">Em progresso</button>
-    <button class="chip" data-filter="status" data-value="executado">Executado</button>
-    <button class="chip" data-filter="status" data-value="arquivado">Arquivado</button>
-    <button class="chip" data-filter="status" data-value="descartado">Descartado</button>
+    <span class="filter-label" data-i18n="filter.status"></span>
+    <button class="chip active" data-filter="status" data-value="" data-i18n="filter.all"></button>
+    <button class="chip" data-filter="status" data-value="novo" data-i18n="status.label.novo"></button>
+    <button class="chip" data-filter="status" data-value="em_progresso" data-i18n="status.label.em_progresso"></button>
+    <button class="chip" data-filter="status" data-value="executado" data-i18n="status.label.executado"></button>
+    <button class="chip" data-filter="status" data-value="arquivado" data-i18n="status.label.arquivado"></button>
+    <button class="chip" data-filter="status" data-value="descartado" data-i18n="status.label.descartado"></button>
   </div>
   <div class="filters" id="filters-progresso">
-    <span class="filter-label">Progresso</span>
-    <button class="chip active" data-filter="progresso" data-value="">Tudo</button>
-    <button class="chip" data-filter="progresso" data-value="instalado">✓ Instalado</button>
-    <button class="chip" data-filter="progresso" data-value="aplicado">✓ Aplicado</button>
-    <button class="chip" data-filter="progresso" data-value="projeto_iniciado">✓ Projeto iniciado</button>
-    <button class="chip" data-filter="progresso" data-value="pendente">Sem progresso</button>
+    <span class="filter-label" data-i18n="filter.progress"></span>
+    <button class="chip active" data-filter="progresso" data-value="" data-i18n="filter.all"></button>
+    <button class="chip" data-filter="progresso" data-value="instalado" data-i18n="progress.installed"></button>
+    <button class="chip" data-filter="progresso" data-value="aplicado" data-i18n="progress.applied"></button>
+    <button class="chip" data-filter="progresso" data-value="projeto_iniciado" data-i18n="progress.started"></button>
+    <button class="chip" data-filter="progresso" data-value="pendente" data-i18n="progress.none"></button>
   </div>
 
   <div class="toast" id="toast">…</div>
   <div class="cards" id="cards"></div>
-  <div class="empty" id="empty" style="display:none;">Nenhum item com esses filtros.</div>
+  <div class="empty" id="empty" style="display:none;"></div>
 
 </div>
 
 <script>
-const API = ''; // mesmo host
-const PRIO_LABEL = { 'agir-agora': '🔥 Agir agora', 'estudar-depois': '📚 Estudar depois', 'arquivar': '🗄️ Arquivar' };
-const STATUS_LABEL = { novo:'novo', em_progresso:'em progresso', executado:'executado', arquivado:'arquivado', descartado:'descartado' };
-const state = { prioridade: '', status: '', progresso: '', search: '', items: [] };
+const I18N = {
+  en: {
+    'header.eyebrow': 'Local panel · http://localhost:8765',
+    'header.title.1': 'Opportunity',
+    'header.title.2': 'pipeline',
+    'btn.reimport': 'Re-import HTML',
+    'btn.report': 'View report',
+    'offline.banner': 'Server offline. Run <code>./start.sh</code> in the bookmarks folder.',
+    'stat.total': 'Total',
+    'stat.hot': 'Act now',
+    'stat.study': 'Study',
+    'stat.archive': 'Archive',
+    'stat.new': 'New',
+    'stat.done': 'Done',
+    'stat.projects': 'Projects',
+    'search.placeholder': 'Search by title, description, author, link…',
+    'search.results': '{filtered} of {total}',
+    'search.count': '{filtered} items',
+    'filter.priority': 'Priority',
+    'filter.status': 'Status',
+    'filter.progress': 'Progress',
+    'filter.all': 'All',
+    'prio.agir-agora': 'Act now',
+    'prio.estudar-depois': 'Study later',
+    'prio.arquivar': 'Archive',
+    'status.novo': 'new',
+    'status.em_progresso': 'in progress',
+    'status.executado': 'done',
+    'status.arquivado': 'archived',
+    'status.descartado': 'discarded',
+    'status.label.novo': 'New',
+    'status.label.em_progresso': 'In progress',
+    'status.label.executado': 'Done',
+    'status.label.arquivado': 'Archived',
+    'status.label.descartado': 'Discarded',
+    'progress.installed': '✓ Installed',
+    'progress.applied': '✓ Applied',
+    'progress.started': '✓ Project started',
+    'progress.none': 'No progress',
+    'flag.instalado': 'Installed',
+    'flag.aplicado': 'Applied',
+    'flag.projeto_iniciado': 'Project started',
+    'tag.worthit': 'worth executing',
+    'btn.claude': '📟 Claude Code',
+    'btn.cowork': '🖥️ Cowork',
+    'btn.newproj': '📁 + New project',
+    'btn.executed': '✓ Done',
+    'btn.archive': '🗄 Archive',
+    'btn.discard': '✗ Discard',
+    'cb.createfolder': 'create folder + git on execute',
+    'cb.github': 'include gh repo create (private)',
+    'details.log': 'execution log',
+    'card.link': 'open on X ↗',
+    'card.noInsight': '(no insight)',
+    'empty': 'No items match those filters.',
+    'toast.flag.on': '{key} enabled',
+    'toast.flag.off': '{key} disabled',
+    'toast.status': 'Status → {status}',
+    'toast.import': 'Imported: {ins} new, {upd} updated',
+    'toast.exec.ok': 'OK: {tipo} dispatched',
+    'toast.exec.err': 'Execution error',
+    'toast.error': 'Error: {msg}',
+    'toast.executing': '… running',
+  },
+  pt: {
+    'header.eyebrow': 'Painel local · http://localhost:8765',
+    'header.title.1': 'Esteira de',
+    'header.title.2': 'oportunidades',
+    'btn.reimport': 'Re-importar HTML',
+    'btn.report': 'Ver relatório',
+    'offline.banner': 'Server offline. Roda <code>./start.sh</code> na pasta bookmarks.',
+    'stat.total': 'Total',
+    'stat.hot': 'Agir agora',
+    'stat.study': 'Estudar',
+    'stat.archive': 'Arquivar',
+    'stat.new': 'Novos',
+    'stat.done': 'Executados',
+    'stat.projects': 'Projetos',
+    'search.placeholder': 'Buscar por título, descrição, autor, link…',
+    'search.results': '{filtered} de {total}',
+    'search.count': '{filtered} itens',
+    'filter.priority': 'Prioridade',
+    'filter.status': 'Status',
+    'filter.progress': 'Progresso',
+    'filter.all': 'Tudo',
+    'prio.agir-agora': 'Agir agora',
+    'prio.estudar-depois': 'Estudar depois',
+    'prio.arquivar': 'Arquivar',
+    'status.novo': 'novo',
+    'status.em_progresso': 'em progresso',
+    'status.executado': 'executado',
+    'status.arquivado': 'arquivado',
+    'status.descartado': 'descartado',
+    'status.label.novo': 'Novo',
+    'status.label.em_progresso': 'Em progresso',
+    'status.label.executado': 'Executado',
+    'status.label.arquivado': 'Arquivado',
+    'status.label.descartado': 'Descartado',
+    'progress.installed': '✓ Instalado',
+    'progress.applied': '✓ Aplicado',
+    'progress.started': '✓ Projeto iniciado',
+    'progress.none': 'Sem progresso',
+    'flag.instalado': 'Instalado',
+    'flag.aplicado': 'Aplicado',
+    'flag.projeto_iniciado': 'Projeto iniciado',
+    'tag.worthit': 'vale executar',
+    'btn.claude': '📟 Claude Code',
+    'btn.cowork': '🖥️ Cowork',
+    'btn.newproj': '📁 + Novo projeto',
+    'btn.executed': '✓ Executado',
+    'btn.archive': '🗄 Arquivar',
+    'btn.discard': '✗ Descartar',
+    'cb.createfolder': 'criar pasta + git ao executar',
+    'cb.github': 'incluir gh repo create (privado)',
+    'details.log': 'log da execução',
+    'card.link': 'abrir no X ↗',
+    'card.noInsight': '(sem insight)',
+    'empty': 'Nenhum item com esses filtros.',
+    'toast.flag.on': '{key} ativado',
+    'toast.flag.off': '{key} desativado',
+    'toast.status': 'Status → {status}',
+    'toast.import': 'Importado: {ins} novos, {upd} atualizados',
+    'toast.exec.ok': 'OK: {tipo} disparado',
+    'toast.exec.err': 'Erro na execução',
+    'toast.error': 'Erro: {msg}',
+    'toast.executing': '… executando',
+  },
+  es: {
+    'header.eyebrow': 'Panel local · http://localhost:8765',
+    'header.title.1': 'Canal de',
+    'header.title.2': 'oportunidades',
+    'btn.reimport': 'Reimportar HTML',
+    'btn.report': 'Ver reporte',
+    'offline.banner': 'Servidor offline. Ejecuta <code>./start.sh</code> en la carpeta bookmarks.',
+    'stat.total': 'Total',
+    'stat.hot': 'Actuar ahora',
+    'stat.study': 'Estudiar',
+    'stat.archive': 'Archivar',
+    'stat.new': 'Nuevos',
+    'stat.done': 'Ejecutados',
+    'stat.projects': 'Proyectos',
+    'search.placeholder': 'Buscar por título, descripción, autor, enlace…',
+    'search.results': '{filtered} de {total}',
+    'search.count': '{filtered} elementos',
+    'filter.priority': 'Prioridad',
+    'filter.status': 'Estado',
+    'filter.progress': 'Progreso',
+    'filter.all': 'Todos',
+    'prio.agir-agora': 'Actuar ahora',
+    'prio.estudar-depois': 'Estudiar después',
+    'prio.arquivar': 'Archivar',
+    'status.novo': 'nuevo',
+    'status.em_progresso': 'en progreso',
+    'status.executado': 'ejecutado',
+    'status.arquivado': 'archivado',
+    'status.descartado': 'descartado',
+    'status.label.novo': 'Nuevo',
+    'status.label.em_progresso': 'En progreso',
+    'status.label.executado': 'Ejecutado',
+    'status.label.arquivado': 'Archivado',
+    'status.label.descartado': 'Descartado',
+    'progress.installed': '✓ Instalado',
+    'progress.applied': '✓ Aplicado',
+    'progress.started': '✓ Proyecto iniciado',
+    'progress.none': 'Sin progreso',
+    'flag.instalado': 'Instalado',
+    'flag.aplicado': 'Aplicado',
+    'flag.projeto_iniciado': 'Proyecto iniciado',
+    'tag.worthit': 'vale ejecutar',
+    'btn.claude': '📟 Claude Code',
+    'btn.cowork': '🖥️ Cowork',
+    'btn.newproj': '📁 + Nuevo proyecto',
+    'btn.executed': '✓ Ejecutado',
+    'btn.archive': '🗄 Archivar',
+    'btn.discard': '✗ Descartar',
+    'cb.createfolder': 'crear carpeta + git al ejecutar',
+    'cb.github': 'incluir gh repo create (privado)',
+    'details.log': 'log de ejecución',
+    'card.link': 'abrir en X ↗',
+    'card.noInsight': '(sin insight)',
+    'empty': 'Ningún elemento con esos filtros.',
+    'toast.flag.on': '{key} activado',
+    'toast.flag.off': '{key} desactivado',
+    'toast.status': 'Estado → {status}',
+    'toast.import': 'Importado: {ins} nuevos, {upd} actualizados',
+    'toast.exec.ok': 'OK: {tipo} disparado',
+    'toast.exec.err': 'Error en la ejecución',
+    'toast.error': 'Error: {msg}',
+    'toast.executing': '… ejecutando',
+  }
+};
 
-function toast(msg, kind='') {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.className = 'toast show ' + kind;
-  clearTimeout(window.__toastTimer);
-  window.__toastTimer = setTimeout(() => t.classList.remove('show'), 3500);
+function detectLang() {
+  const stored = localStorage.getItem('lang');
+  if (stored && I18N[stored]) return stored;
+  const nav = (navigator.language || 'en').toLowerCase();
+  if (nav.startsWith('pt')) return 'pt';
+  if (nav.startsWith('es')) return 'es';
+  return 'en';
 }
 
-async function api(path, opts={}) {
+const API = '';
+const state = {
+  lang: detectLang(),
+  prioridade: '', status: '', progresso: '',
+  search: '', items: [],
+};
+
+function t(key, params = {}) {
+  const tbl = I18N[state.lang] || I18N.en;
+  let s = (tbl[key] ?? I18N.en[key] ?? key);
+  for (const [k, v] of Object.entries(params)) {
+    s = s.split('{' + k + '}').join(v);
+  }
+  return s;
+}
+
+function applyStaticI18n() {
+  document.documentElement.lang = state.lang;
+  document.title = t('header.title.1') + ' ' + t('header.title.2') + ' · X Bookmarks Panel';
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    const prefix = el.getAttribute('data-i18n-emoji') || '';
+    el.innerHTML = prefix + t(key);
+  });
+  document.getElementById('search').placeholder = t('search.placeholder');
+  document.getElementById('offline-banner').innerHTML = t('offline.banner');
+  document.querySelectorAll('.lang-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.lang === state.lang);
+  });
+}
+
+function toast(msg, kind = '') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'toast show ' + kind;
+  clearTimeout(window.__toastTimer);
+  window.__toastTimer = setTimeout(() => el.classList.remove('show'), 3500);
+}
+
+async function api(path, opts = {}) {
   try {
     const r = await fetch(API + path, {
       headers: { 'Content-Type': 'application/json' },
       ...opts,
     });
     if (!r.ok) {
-      const data = await r.json().catch(()=>({error:'erro'}));
+      const data = await r.json().catch(() => ({ error: 'error' }));
       throw new Error(data.error || ('HTTP ' + r.status));
     }
     return await r.json();
@@ -380,31 +618,36 @@ async function api(path, opts={}) {
 
 function escapeHtml(s) {
   return (s ?? '').toString()
-    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
-    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
+
+const PRIO_EMOJI = {
+  'agir-agora': '🔥',
+  'estudar-depois': '📚',
+  'arquivar': '🗄️',
+};
 
 async function renderStats() {
   const s = await api('/api/stats');
   const html = `
-    <div class="stat"><div class="stat-value">${s.total}</div><div class="stat-label">Total</div></div>
-    <div class="stat hot"><div class="stat-value">${s.agir_agora}</div><div class="stat-label">Agir agora</div></div>
-    <div class="stat study"><div class="stat-value">${s.estudar}</div><div class="stat-label">Estudar</div></div>
-    <div class="stat archive"><div class="stat-value">${s.arquivar}</div><div class="stat-label">Arquivar</div></div>
-    <div class="stat"><div class="stat-value">${s.novo}</div><div class="stat-label">Novos</div></div>
-    <div class="stat ok"><div class="stat-value">${s.executado}</div><div class="stat-label">Executados</div></div>
-    <div class="stat"><div class="stat-value">${s.projetos}</div><div class="stat-label">Projetos</div></div>
+    <div class="stat"><div class="stat-value">${s.total}</div><div class="stat-label">${t('stat.total')}</div></div>
+    <div class="stat hot"><div class="stat-value">${s.agir_agora}</div><div class="stat-label">${t('stat.hot')}</div></div>
+    <div class="stat study"><div class="stat-value">${s.estudar}</div><div class="stat-label">${t('stat.study')}</div></div>
+    <div class="stat archive"><div class="stat-value">${s.arquivar}</div><div class="stat-label">${t('stat.archive')}</div></div>
+    <div class="stat"><div class="stat-value">${s.novo}</div><div class="stat-label">${t('stat.new')}</div></div>
+    <div class="stat ok"><div class="stat-value">${s.executado}</div><div class="stat-label">${t('stat.done')}</div></div>
+    <div class="stat"><div class="stat-value">${s.projetos}</div><div class="stat-label">${t('stat.projects')}</div></div>
   `;
   document.getElementById('stats').innerHTML = html;
 }
 
 function recommendedTipo(op) {
-  // mesma heurística do executor.py (versão simplificada para sinalização visual)
-  const codeKw = ['claude code','plugin','skill','clonar','clone','git','repo','github','config','mcp','instalar','projeto em','scaffold','mvp','docker','python','node','react','c#'];
-  const deskKw = ['ler ','skim','olhar','assistir','navegar','demo','landing','meta ads','tiktok','instagram','feed','playbook','thread','artigo','curso'];
-  const bag = ((op.acao_sugerida||'') + ' ' + (op.insight||'') + ' ' + (op.texto||'')).toLowerCase();
-  const codeCats = ['Claude Code','Agents','Scraping','Automação','Open-source','AI Tools'];
-  const deskCats = ['Marketing','Meta Ads','TikTok','SaaS','Produtividade','Meta'];
+  const codeKw = ['claude code', 'plugin', 'skill', 'clonar', 'clone', 'git', 'repo', 'github', 'config', 'mcp', 'instalar', 'projeto em', 'scaffold', 'mvp', 'docker', 'python', 'node', 'react', 'c#'];
+  const deskKw = ['ler ', 'skim', 'olhar', 'assistir', 'navegar', 'demo', 'landing', 'meta ads', 'tiktok', 'instagram', 'feed', 'playbook', 'thread', 'artigo', 'curso'];
+  const bag = ((op.acao_sugerida || '') + ' ' + (op.insight || '') + ' ' + (op.texto || '')).toLowerCase();
+  const codeCats = ['Claude Code', 'Agents', 'Scraping', 'Automação', 'Open-source', 'AI Tools'];
+  const deskCats = ['Marketing', 'Meta Ads', 'TikTok', 'SaaS', 'Produtividade', 'Meta'];
   let c = codeKw.filter(k => bag.includes(k)).length;
   let d = deskKw.filter(k => bag.includes(k)).length;
   if (codeCats.includes(op.categoria)) c += 2;
@@ -426,44 +669,47 @@ function highlight(text, q) {
 function cardHTML(op) {
   const reco = recommendedTipo(op);
   const q = state.search;
-  const flag = (key, label) => `
+  const flag = (key, labelKey) => `
     <button class="flag ${op[key] ? 'on' : ''}" data-act="flag" data-key="${key}">
-      <span class="dot">${op[key] ? '✓' : '○'}</span>${label}
+      <span class="dot">${op[key] ? '✓' : '○'}</span>${t(labelKey)}
     </button>`;
+  const prioEmoji = PRIO_EMOJI[op.prioridade] || '';
+  const prioLabel = t('prio.' + op.prioridade);
+  const statusLabel = t('status.' + op.status);
   return `
     <div class="card" data-priority="${op.prioridade}" data-status="${op.status}" data-id="${op.id}">
       <div class="card-top">
-        <span class="tag tag-priority ${op.prioridade}">${PRIO_LABEL[op.prioridade] || op.prioridade}</span>
+        <span class="tag tag-priority ${op.prioridade}">${prioEmoji} ${prioLabel}</span>
         <span class="tag tag-cat">${escapeHtml(op.categoria || '—')}</span>
-        <span class="tag tag-status" data-s="${op.status}">${STATUS_LABEL[op.status] || op.status}</span>
-        ${op.vale_executar ? '<span class="tag" style="color:var(--accent);border:1px solid var(--accent);">vale executar</span>' : ''}
+        <span class="tag tag-status" data-s="${op.status}">${statusLabel}</span>
+        ${op.vale_executar ? `<span class="tag" style="color:var(--accent);border:1px solid var(--accent);">${t('tag.worthit')}</span>` : ''}
       </div>
-      <div class="insight">${highlight(op.insight || '(sem insight)', q)}</div>
+      <div class="insight">${highlight(op.insight || t('card.noInsight'), q)}</div>
       <div class="action">${highlight(op.acao_sugerida || '', q)}</div>
       <div class="flags">
-        ${flag('instalado', 'Instalado')}
-        ${flag('aplicado', 'Aplicado')}
-        ${flag('projeto_iniciado', 'Projeto iniciado')}
+        ${flag('instalado', 'flag.instalado')}
+        ${flag('aplicado', 'flag.aplicado')}
+        ${flag('projeto_iniciado', 'flag.projeto_iniciado')}
       </div>
       <div class="meta-line">
-        <span>${highlight((op.autor||'') + ' ' + (op.handle||''), q)}</span>
+        <span>${highlight((op.autor || '') + ' ' + (op.handle || ''), q)}</span>
         <span>${escapeHtml(op.data_bookmark || '')}</span>
-        <a href="${escapeHtml(op.link)}" target="_blank">abrir no X ↗</a>
+        <a href="${escapeHtml(op.link)}" target="_blank">${t('card.link')}</a>
       </div>
       <div class="actions-bar">
-        <button class="btn btn-claude ${reco==='claude'?'recommended':''}" data-act="exec" data-tipo="claude">📟 Claude Code</button>
-        <button class="btn btn-cowork ${reco==='cowork'?'recommended':''}" data-act="exec" data-tipo="cowork">🖥️ Cowork</button>
-        <button class="btn btn-projeto" data-act="exec" data-tipo="claude" data-projeto="1">📁 + Novo projeto</button>
-        <button class="btn btn-status" data-act="status" data-status="executado">✓ Executado</button>
-        <button class="btn btn-status" data-act="status" data-status="arquivado">🗄 Arquivar</button>
-        <button class="btn btn-status" data-act="status" data-status="descartado">✗ Descartar</button>
+        <button class="btn btn-claude ${reco === 'claude' ? 'recommended' : ''}" data-act="exec" data-tipo="claude">${t('btn.claude')}</button>
+        <button class="btn btn-cowork ${reco === 'cowork' ? 'recommended' : ''}" data-act="exec" data-tipo="cowork">${t('btn.cowork')}</button>
+        <button class="btn btn-projeto" data-act="exec" data-tipo="claude" data-projeto="1">${t('btn.newproj')}</button>
+        <button class="btn btn-status" data-act="status" data-status="executado">${t('btn.executed')}</button>
+        <button class="btn btn-status" data-act="status" data-status="arquivado">${t('btn.archive')}</button>
+        <button class="btn btn-status" data-act="status" data-status="descartado">${t('btn.discard')}</button>
       </div>
       <div class="check-row">
-        <label><input type="checkbox" data-projeto-flag> criar pasta + git ao executar</label>
-        <label><input type="checkbox" data-github-flag> incluir gh repo create (privado)</label>
+        <label><input type="checkbox" data-projeto-flag> ${t('cb.createfolder')}</label>
+        <label><input type="checkbox" data-github-flag> ${t('cb.github')}</label>
       </div>
       <details class="exec-log" style="display:none;">
-        <summary>log da execução</summary>
+        <summary>${t('details.log')}</summary>
         <pre class="log"></pre>
       </details>
     </div>
@@ -488,8 +734,8 @@ function applyFilters(items) {
         o.insight, o.acao_sugerida, o.texto, o.autor, o.handle,
         o.categoria, o.link, o.notas,
       ].filter(Boolean).join(' ').toLowerCase();
-      for (const t of tokens) {
-        if (!hay.includes(t)) return false;
+      for (const tk of tokens) {
+        if (!hay.includes(tk)) return false;
       }
     }
     return true;
@@ -507,17 +753,33 @@ function renderCards() {
   const filtered = applyFilters(state.items);
   const wrap = document.getElementById('cards');
   wrap.innerHTML = filtered.map(cardHTML).join('');
-  document.getElementById('empty').style.display = filtered.length ? 'none' : 'block';
+  const emptyEl = document.getElementById('empty');
+  emptyEl.style.display = filtered.length ? 'none' : 'block';
+  emptyEl.textContent = t('empty');
   const meta = document.getElementById('search-meta');
   if (state.search) {
-    meta.textContent = `${filtered.length} de ${state.items.length}`;
+    meta.textContent = t('search.results', { filtered: filtered.length, total: state.items.length });
   } else {
-    meta.textContent = `${filtered.length} itens`;
+    meta.textContent = t('search.count', { filtered: filtered.length });
   }
 }
 
+function setLang(lang) {
+  if (!I18N[lang]) return;
+  state.lang = lang;
+  localStorage.setItem('lang', lang);
+  applyStaticI18n();
+  renderCards();
+  renderStats();
+}
+
+document.getElementById('lang-picker').addEventListener('click', (e) => {
+  const btn = e.target.closest('.lang-btn');
+  if (!btn) return;
+  setLang(btn.dataset.lang);
+});
+
 document.addEventListener('click', async (e) => {
-  // filtros
   const chip = e.target.closest('.chip');
   if (chip) {
     const filter = chip.dataset.filter;
@@ -527,7 +789,6 @@ document.addEventListener('click', async (e) => {
     return;
   }
 
-  // botão de ação
   const btn = e.target.closest('button[data-act]');
   if (!btn) return;
   const card = btn.closest('.card');
@@ -545,12 +806,11 @@ document.addEventListener('click', async (e) => {
         method: 'POST', body: JSON.stringify({ [key]: !!next }),
       });
       Object.assign(op, updated);
-      toast(`${key} → ${next ? 'ativado' : 'desativado'}`, 'ok');
+      toast(t(next ? 'toast.flag.on' : 'toast.flag.off', { key: t('flag.' + key) }), 'ok');
     } catch (err) {
-      // rollback visual
       btn.classList.toggle('on', !next);
       btn.querySelector('.dot').textContent = !next ? '✓' : '○';
-      toast('Erro: ' + err.message, 'err');
+      toast(t('toast.error', { msg: err.message }), 'err');
     }
     return;
   }
@@ -559,9 +819,9 @@ document.addEventListener('click', async (e) => {
     const status = btn.dataset.status;
     try {
       await api(`/api/oportunidades/${opId}`, { method: 'POST', body: JSON.stringify({ status }) });
-      toast(`Status → ${status}`, 'ok');
+      toast(t('toast.status', { status: t('status.' + status) }), 'ok');
       refresh();
-    } catch (err) { toast('Erro: ' + err.message, 'err'); }
+    } catch (err) { toast(t('toast.error', { msg: err.message }), 'err'); }
     return;
   }
 
@@ -573,24 +833,24 @@ document.addEventListener('click', async (e) => {
     const criar = fromButton || (checkbox && checkbox.checked);
     const com_github = !!(ghBox && ghBox.checked);
     btn.disabled = true;
-    const original = btn.textContent;
-    btn.textContent = '… executando';
+    const original = btn.innerHTML;
+    btn.textContent = t('toast.executing');
     try {
       const res = await api(`/api/oportunidades/${opId}/executar`, {
         method: 'POST',
-        body: JSON.stringify({ tipo, criar_projeto: criar, com_github }),
+        body: JSON.stringify({ tipo, criar_projeto: criar, com_github, lang: state.lang }),
       });
       const det = card.querySelector('.exec-log');
       det.style.display = 'block';
       det.querySelector('pre').textContent = res.log || JSON.stringify(res, null, 2);
       det.open = true;
-      toast(res.ok ? `OK: ${tipo} disparado` : 'Erro na execução', res.ok ? 'ok' : 'err');
+      toast(res.ok ? t('toast.exec.ok', { tipo }) : t('toast.exec.err'), res.ok ? 'ok' : 'err');
       refresh();
     } catch (err) {
-      toast('Erro: ' + err.message, 'err');
+      toast(t('toast.error', { msg: err.message }), 'err');
     } finally {
       btn.disabled = false;
-      btn.textContent = original;
+      btn.innerHTML = original;
     }
   }
 });
@@ -598,12 +858,11 @@ document.addEventListener('click', async (e) => {
 document.getElementById('btn-reimport').addEventListener('click', async () => {
   try {
     const res = await api('/api/oportunidades/import', { method: 'POST' });
-    toast(`Importado: ${res.inseridos} novos, ${res.atualizados} atualizados`, 'ok');
+    toast(t('toast.import', { ins: res.inseridos, upd: res.atualizados }), 'ok');
     refresh();
-  } catch (err) { toast('Erro: ' + err.message, 'err'); }
+  } catch (err) { toast(t('toast.error', { msg: err.message }), 'err'); }
 });
 
-// busca: debounce + atalhos
 const $search = document.getElementById('search');
 let __searchTimer;
 $search.addEventListener('input', (e) => {
@@ -613,7 +872,6 @@ $search.addEventListener('input', (e) => {
     renderCards();
   }, 120);
 });
-// "/" foca a busca; "Esc" limpa
 document.addEventListener('keydown', (e) => {
   if (e.key === '/' && document.activeElement !== $search) {
     e.preventDefault();
@@ -627,10 +885,8 @@ document.addEventListener('keydown', (e) => {
   }
 });
 
-// inicial
+applyStaticI18n();
 refresh().catch(err => console.error(err));
-// reimporta auto a cada 5 min e refresca a cada 1 min (cobre caso de a task agendada
-// ter editado o HTML)
 setInterval(refresh, 60_000);
 </script>
 </body>

@@ -104,37 +104,118 @@ def gerar_slug_para(op: dict) -> str:
     return candidate
 
 
-def montar_prompt(op: dict, *, tipo: str, projeto_path: Path | None = None) -> str:
-    header = (
-        f"Contexto: bookmark salvo no X.\n"
-        f"Autor: {op.get('autor')} ({op.get('handle')})\n"
-        f"Link: {op.get('link')}\n"
-        f"Categoria: {op.get('categoria')} · Prioridade: {op.get('prioridade')}\n"
+PROMPT_I18N: dict[str, dict[str, str]] = {
+    "en": {
+        "header": (
+            "Context: bookmark saved on X.\n"
+            "Author: {autor} ({handle})\n"
+            "Link: {link}\n"
+            "Category: {categoria} · Priority: {prioridade}\n"
+        ),
+        "body": (
+            "\nOriginal text:\n  {texto}\n"
+            "\nTriage insight:\n  {insight}\n"
+            "\nSuggested action:\n  {acao_sugerida}\n"
+        ),
+        "no_text": "(no text)",
+        "claude": (
+            "\n---\nYou're running inside `{projeto_path}` "
+            "(a new folder created for this opportunity). Do the following:\n"
+            "  1. Confirm you understood the opportunity.\n"
+            "  2. Propose a 3-5 step plan to execute the suggested action.\n"
+            "  3. After my OK, start implementing (create files, install deps, etc.).\n"
+            "  4. When done, update the project's README.md with what was done.\n"
+        ),
+        "cowork": (
+            "\n---\nThis opportunity needs desktop/visual interaction. "
+            "Do the following:\n"
+            "  1. Open the bookmark link in Chrome.\n"
+            "  2. Execute the suggested action above (read, test, validate, take notes).\n"
+            "  3. Come back with a summary of what you found (3-5 bullets).\n"
+            "  4. Suggest the next step: archive / turn into project / dig deeper.\n"
+        ),
+    },
+    "pt": {
+        "header": (
+            "Contexto: bookmark salvo no X.\n"
+            "Autor: {autor} ({handle})\n"
+            "Link: {link}\n"
+            "Categoria: {categoria} · Prioridade: {prioridade}\n"
+        ),
+        "body": (
+            "\nTexto original:\n  {texto}\n"
+            "\nInsight da triagem:\n  {insight}\n"
+            "\nAção sugerida:\n  {acao_sugerida}\n"
+        ),
+        "no_text": "(sem texto)",
+        "claude": (
+            "\n---\nVocê está rodando dentro de `{projeto_path}` "
+            "(pasta nova criada para esta oportunidade). Faça o seguinte:\n"
+            "  1. Confirme que entendeu a oportunidade.\n"
+            "  2. Proponha um plano em 3-5 passos para executar a ação sugerida.\n"
+            "  3. Após meu OK, comece a implementar (criar arquivos, instalar deps, etc.).\n"
+            "  4. Quando terminar, atualize o README.md do projeto com o que foi feito.\n"
+        ),
+        "cowork": (
+            "\n---\nEsta oportunidade exige interação visual/desktop. "
+            "Faça o seguinte:\n"
+            "  1. Abra o link do bookmark no Chrome.\n"
+            "  2. Execute a ação sugerida acima (ler, testar, validar, anotar).\n"
+            "  3. Volte com um resumo do que encontrou (3-5 bullets).\n"
+            "  4. Sugira o próximo passo: arquivar / virar projeto / aprofundar.\n"
+        ),
+    },
+    "es": {
+        "header": (
+            "Contexto: bookmark guardado en X.\n"
+            "Autor: {autor} ({handle})\n"
+            "Enlace: {link}\n"
+            "Categoría: {categoria} · Prioridad: {prioridade}\n"
+        ),
+        "body": (
+            "\nTexto original:\n  {texto}\n"
+            "\nInsight de la triage:\n  {insight}\n"
+            "\nAcción sugerida:\n  {acao_sugerida}\n"
+        ),
+        "no_text": "(sin texto)",
+        "claude": (
+            "\n---\nEstás corriendo dentro de `{projeto_path}` "
+            "(carpeta nueva creada para esta oportunidad). Haz lo siguiente:\n"
+            "  1. Confirma que entendiste la oportunidad.\n"
+            "  2. Propón un plan de 3-5 pasos para ejecutar la acción sugerida.\n"
+            "  3. Tras mi OK, comienza a implementar (crear archivos, instalar deps, etc.).\n"
+            "  4. Cuando termines, actualiza el README.md del proyecto con lo hecho.\n"
+        ),
+        "cowork": (
+            "\n---\nEsta oportunidad necesita interacción visual/desktop. "
+            "Haz lo siguiente:\n"
+            "  1. Abre el enlace del bookmark en Chrome.\n"
+            "  2. Ejecuta la acción sugerida arriba (leer, probar, validar, anotar).\n"
+            "  3. Vuelve con un resumen de lo que encontraste (3-5 bullets).\n"
+            "  4. Sugiere el siguiente paso: archivar / convertir en proyecto / profundizar.\n"
+        ),
+    },
+}
+
+
+def _lang(lang: str | None) -> str:
+    return lang if lang in PROMPT_I18N else "pt"
+
+
+def montar_prompt(op: dict, *, tipo: str, projeto_path: Path | None = None,
+                  lang: str = "pt") -> str:
+    L = PROMPT_I18N[_lang(lang)]
+    header = L["header"].format(
+        autor=op.get("autor"), handle=op.get("handle"),
+        link=op.get("link"), categoria=op.get("categoria"),
+        prioridade=op.get("prioridade"),
     )
-    body = (
-        f"\nTexto original:\n  {op.get('texto') or '(sem texto)'}\n"
-        f"\nInsight da triagem:\n  {op.get('insight')}\n"
-        f"\nAção sugerida:\n  {op.get('acao_sugerida')}\n"
+    body = L["body"].format(
+        texto=op.get("texto") or L["no_text"],
+        insight=op.get("insight"),
+        acao_sugerida=op.get("acao_sugerida"),
     )
-    if tipo == "claude":
-        outro = (
-            f"\n---\nVocê está rodando dentro de `{projeto_path}` "
-            f"(pasta nova criada para esta oportunidade). "
-            f"Faça o seguinte:\n"
-            f"  1. Confirme que entendeu a oportunidade.\n"
-            f"  2. Proponha um plano em 3-5 passos para executar a ação sugerida.\n"
-            f"  3. Após meu OK, comece a implementar (criar arquivos, instalar deps, etc.).\n"
-            f"  4. Quando terminar, atualize o README.md do projeto com o que foi feito.\n"
-        )
-    else:
-        outro = (
-            f"\n---\nEsta oportunidade exige interação visual/desktop. "
-            f"Faça o seguinte:\n"
-            f"  1. Abra o link do bookmark no Chrome.\n"
-            f"  2. Execute a ação sugerida acima (ler, testar, validar, anotar).\n"
-            f"  3. Volte com um resumo do que encontrou (3-5 bullets).\n"
-            f"  4. Sugira o próximo passo: arquivar / virar projeto / aprofundar.\n"
-        )
+    outro = L["claude" if tipo == "claude" else "cowork"].format(projeto_path=projeto_path)
     return header + body + outro
 
 
@@ -156,47 +237,129 @@ def open_terminal_with_command(cwd: Path, cmd: str) -> None:
     subprocess.run(["osascript", "-e", 'tell application "Terminal" to activate'], check=False)
 
 
-def criar_projeto(op: dict, *, com_github: bool = False) -> dict:
+SCAFFOLD_I18N: dict[str, dict[str, str]] = {
+    "en": {
+        "readme": (
+            "# {slug}\n\n"
+            "Project bootstrapped from a bookmark saved on X.\n\n"
+            "**Link**: {link}\n"
+            "**Author**: {autor} ({handle})\n"
+            "**Category**: {categoria} · **Priority**: {prioridade}\n"
+            "**Bookmark date**: {data_bookmark}\n\n"
+            "## Original text\n\n> {texto}\n\n"
+            "## Triage insight\n\n{insight}\n\n"
+            "## Suggested action\n\n{acao_sugerida}\n\n"
+            "## Status\n\n- [ ] Plan defined\n- [ ] In progress\n- [ ] Done\n"
+        ),
+        "claude_md": (
+            "# Context for Claude Code\n\n"
+            "This project was spawned from an opportunity triaged in the bookmarks panel.\n\n"
+            "## Goal\n\n{acao_sugerida}\n\n"
+            "## Why it matters\n\n{insight}\n\n"
+            "## Conventions\n\n"
+            "- Save progress in `NOTES.md` at the end of each session.\n"
+            "- Update the status checklist in `README.md`.\n"
+            "- Small commits with descriptive messages.\n"
+            "- When done, mark the opportunity as `executado` in the panel.\n"
+        ),
+        "no_text": "(no text)",
+        "log_readme": "✓ README.md created",
+        "log_claude": "✓ CLAUDE.md created",
+        "commit_msg": "chore: initial scaffold from bookmarks panel",
+    },
+    "pt": {
+        "readme": (
+            "# {slug}\n\n"
+            "Projeto criado a partir do bookmark salvo no X.\n\n"
+            "**Link**: {link}\n"
+            "**Autor**: {autor} ({handle})\n"
+            "**Categoria**: {categoria} · **Prioridade**: {prioridade}\n"
+            "**Data do bookmark**: {data_bookmark}\n\n"
+            "## Texto original\n\n> {texto}\n\n"
+            "## Insight da triagem\n\n{insight}\n\n"
+            "## Ação sugerida\n\n{acao_sugerida}\n\n"
+            "## Status\n\n- [ ] Plano definido\n- [ ] Em desenvolvimento\n- [ ] Concluído\n"
+        ),
+        "claude_md": (
+            "# Contexto para o Claude Code\n\n"
+            "Este projeto nasceu de uma oportunidade triada no painel de bookmarks.\n\n"
+            "## Objetivo\n\n{acao_sugerida}\n\n"
+            "## Por que importa\n\n{insight}\n\n"
+            "## Convenções\n\n"
+            "- Salvar progresso em `NOTES.md` ao final de cada sessão.\n"
+            "- Atualizar o checklist de status no `README.md`.\n"
+            "- Commits pequenos e mensagens descritivas.\n"
+            "- Ao concluir, marque a oportunidade como `executado` no painel.\n"
+        ),
+        "no_text": "(sem texto)",
+        "log_readme": "✓ README.md criado",
+        "log_claude": "✓ CLAUDE.md criado",
+        "commit_msg": "chore: scaffold inicial pelo painel de bookmarks",
+    },
+    "es": {
+        "readme": (
+            "# {slug}\n\n"
+            "Proyecto creado a partir del bookmark guardado en X.\n\n"
+            "**Enlace**: {link}\n"
+            "**Autor**: {autor} ({handle})\n"
+            "**Categoría**: {categoria} · **Prioridad**: {prioridade}\n"
+            "**Fecha del bookmark**: {data_bookmark}\n\n"
+            "## Texto original\n\n> {texto}\n\n"
+            "## Insight de la triage\n\n{insight}\n\n"
+            "## Acción sugerida\n\n{acao_sugerida}\n\n"
+            "## Estado\n\n- [ ] Plan definido\n- [ ] En desarrollo\n- [ ] Concluido\n"
+        ),
+        "claude_md": (
+            "# Contexto para Claude Code\n\n"
+            "Este proyecto nació de una oportunidad triada en el panel de bookmarks.\n\n"
+            "## Objetivo\n\n{acao_sugerida}\n\n"
+            "## Por qué importa\n\n{insight}\n\n"
+            "## Convenciones\n\n"
+            "- Guardar progreso en `NOTES.md` al final de cada sesión.\n"
+            "- Actualizar el checklist de estado en `README.md`.\n"
+            "- Commits pequeños con mensajes descriptivos.\n"
+            "- Al concluir, marca la oportunidad como `executado` en el panel.\n"
+        ),
+        "no_text": "(sin texto)",
+        "log_readme": "✓ README.md creado",
+        "log_claude": "✓ CLAUDE.md creado",
+        "commit_msg": "chore: scaffold inicial desde el panel de bookmarks",
+    },
+}
+
+
+def criar_projeto(op: dict, *, com_github: bool = False, lang: str = "pt") -> dict:
+    L = SCAFFOLD_I18N[_lang(lang)]
     slug = gerar_slug_para(op)
     path = ROOT / slug
     path.mkdir(parents=True, exist_ok=True)
 
     log_lines: list[str] = []
 
-    readme = (
-        f"# {slug}\n\n"
-        f"Projeto criado a partir do bookmark salvo no X.\n\n"
-        f"**Link**: {op.get('link')}\n"
-        f"**Autor**: {op.get('autor')} ({op.get('handle')})\n"
-        f"**Categoria**: {op.get('categoria')} · **Prioridade**: {op.get('prioridade')}\n"
-        f"**Data do bookmark**: {op.get('data_bookmark')}\n\n"
-        f"## Texto original\n\n> {op.get('texto') or '(sem texto)'}\n\n"
-        f"## Insight da triagem\n\n{op.get('insight')}\n\n"
-        f"## Ação sugerida\n\n{op.get('acao_sugerida')}\n\n"
-        f"## Status\n\n- [ ] Plano definido\n- [ ] Em desenvolvimento\n- [ ] Concluído\n"
-    )
-    (path / "README.md").write_text(readme, encoding="utf-8")
-    log_lines.append("✓ README.md criado")
+    ctx = {
+        "slug": slug,
+        "link": op.get("link"),
+        "autor": op.get("autor"),
+        "handle": op.get("handle"),
+        "categoria": op.get("categoria"),
+        "prioridade": op.get("prioridade"),
+        "data_bookmark": op.get("data_bookmark"),
+        "texto": op.get("texto") or L["no_text"],
+        "insight": op.get("insight"),
+        "acao_sugerida": op.get("acao_sugerida"),
+    }
 
-    claude_md = (
-        f"# Contexto para o Claude Code\n\n"
-        f"Este projeto nasceu de uma oportunidade triada no painel de bookmarks.\n\n"
-        f"## Objetivo\n\n{op.get('acao_sugerida')}\n\n"
-        f"## Por que importa\n\n{op.get('insight')}\n\n"
-        f"## Convenções\n\n"
-        f"- Salvar progresso em `NOTES.md` ao final de cada sessão.\n"
-        f"- Atualizar o checklist de status no `README.md`.\n"
-        f"- Commits pequenos e mensagens descritivas.\n"
-        f"- Ao concluir, marque a oportunidade como `executado` no painel.\n"
-    )
-    (path / "CLAUDE.md").write_text(claude_md, encoding="utf-8")
-    log_lines.append("✓ CLAUDE.md criado")
+    (path / "README.md").write_text(L["readme"].format(**ctx), encoding="utf-8")
+    log_lines.append(L["log_readme"])
+
+    (path / "CLAUDE.md").write_text(L["claude_md"].format(**ctx), encoding="utf-8")
+    log_lines.append(L["log_claude"])
 
     if shutil.which("git"):
         subprocess.run(["git", "init", "-q", "-b", "main"], cwd=path, check=False)
         subprocess.run(["git", "add", "."], cwd=path, check=False)
         subprocess.run(
-            ["git", "commit", "-q", "-m", "chore: scaffold inicial pelo painel de bookmarks"],
+            ["git", "commit", "-q", "-m", L["commit_msg"]],
             cwd=path, check=False,
         )
         log_lines.append("✓ git init + commit inicial")
@@ -246,7 +409,8 @@ def criar_projeto(op: dict, *, com_github: bool = False) -> dict:
 
 
 def executar(op_id: int, *, tipo_override: str | None = None,
-             criar_projeto_flag: bool = False, com_github: bool = False) -> dict:
+             criar_projeto_flag: bool = False, com_github: bool = False,
+             lang: str = "pt") -> dict:
     op = db.get_oportunidade(op_id)
     if not op:
         raise ValueError(f"Oportunidade #{op_id} não existe")
@@ -255,16 +419,16 @@ def executar(op_id: int, *, tipo_override: str | None = None,
     if tipo not in ("claude", "cowork"):
         raise ValueError(f"Tipo inválido: {tipo}")
 
-    log_lines: list[str] = [f"Tipo decidido: {tipo} (override={tipo_override})"]
+    log_lines: list[str] = [f"Tipo decidido: {tipo} (override={tipo_override}, lang={lang})"]
     projeto = None
     projeto_path = None
 
     if criar_projeto_flag:
-        projeto = criar_projeto(op, com_github=com_github)
+        projeto = criar_projeto(op, com_github=com_github, lang=lang)
         projeto_path = Path(projeto["path"])
         log_lines.append(projeto["log"])
 
-    prompt = montar_prompt(op, tipo=tipo, projeto_path=projeto_path)
+    prompt = montar_prompt(op, tipo=tipo, projeto_path=projeto_path, lang=lang)
 
     exec_id = db.log_execucao(
         op_id, tipo=tipo, prompt=prompt,

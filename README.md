@@ -1,134 +1,138 @@
 # X Bookmarks Panel
 
-Painel local que transforma bookmarks salvos do **x.com** numa esteira acionável. Lê um HTML com sua curadoria, guarda tudo em SQLite, e coloca um botão **Executar** em cada item — abrindo o Claude Code (em pasta nova, com git + GitHub opcional) ou o app Claude desktop (Cowork) conforme o tipo de tarefa.
+> 🇺🇸 English. Leia em português: [README.pt-BR.md](README.pt-BR.md).
 
-> Local-first. Nenhum dado sai da sua máquina. Sem tokens, sem API externa, sem telemetria.
+A local panel that turns your saved **x.com** bookmarks into an actionable queue. It reads your curated bookmarks from an HTML file, stores them in SQLite, and drops an **Execute** button on every card — firing up either Claude Code (in a fresh project folder, with git and optional GitHub repo) or the Claude desktop app (Cowork), depending on the task type.
 
----
-
-## Por que isso existe
-
-Bookmark do X vira um cemitério. Você salva um tweet de madrugada prometendo voltar, e ele some no scroll. Este painel pega a sua triagem — seja manual, vinda de um agente, de uma scheduled task, ou de qualquer pipeline que produza o HTML no formato esperado — e te força a decidir: **agir agora**, **estudar depois** ou **arquivar**. Um clique dispara a execução.
-
-Ele assume que você já tem o Claude Code instalado e, opcionalmente, o `gh` autenticado para criar repos privados automaticamente.
+> Local-first. Nothing leaves your machine. No tokens, no external API, no telemetry.
 
 ---
 
-## O que faz
+## Why this exists
 
-- Importa bookmarks de um HTML (`relatorio-bookmarks-x.html`) com um array `const BOOKMARKS = [...]`.
-- Mostra cada item como card com **insight**, **ação sugerida**, **prioridade** e **categoria**.
-- Classifica automaticamente entre **Claude Code** (tarefa de código) e **Cowork** (tarefa visual/desktop) por heurística simples — você pode sobrescrever.
-- Ao clicar **Executar**:
-  - **Claude Code**: copia o prompt pro clipboard e abre o Terminal no diretório do projeto rodando `claude "<prompt>"`.
-  - **Cowork**: copia o prompt e abre o app Claude — você cola com ⌘V.
-  - **+ Novo projeto**: cria `<repo>/<slug>/`, escreve `README.md` + `CLAUDE.md`, faz `git init` + primeiro commit. Opcional: `gh repo create --private`.
-- Marca progresso: **instalado**, **aplicado**, **projeto iniciado** (flags independentes por card).
-- Busca textual com debounce (`/` foca, `Esc` limpa).
-- Serviço launchd sempre-online: painel reinicia em ≤30s se cair, watchdog a cada 5min.
+X bookmarks become a graveyard. You save a tweet at midnight swearing you'll come back to it, and it disappears in the scroll. This panel takes your triage output — whether manual, from an agent, from a scheduled task, or any pipeline that produces the expected HTML — and forces you to decide: **act now**, **study later**, or **archive**. One click dispatches the execution.
+
+It assumes you already have Claude Code installed and, optionally, `gh` authenticated for automatic private repo creation.
+
+---
+
+## What it does
+
+- Imports bookmarks from an HTML file (`relatorio-bookmarks-x.html`) containing a `const BOOKMARKS = [...]` array.
+- Renders each item as a card with **insight**, **suggested action**, **priority**, and **category**.
+- Classifies each item automatically between **Claude Code** (code task) and **Cowork** (desktop/visual task) via a simple heuristic — you can always override.
+- On **Execute**:
+  - **Claude Code**: copies the prompt to the clipboard and opens Terminal at the project path running `claude "<prompt>"`.
+  - **Cowork**: copies the prompt and opens the Claude desktop app — paste with ⌘V.
+  - **+ New project**: creates `<repo>/<slug>/`, writes `README.md` + `CLAUDE.md`, runs `git init` + initial commit. Optional: `gh repo create --private`.
+- Tracks progress: **installed**, **applied**, **project started** (three independent flags per card).
+- Debounced text search (`/` focuses, `Esc` clears).
+- Always-on via launchd: panel restarts in ≤30s if it crashes, watchdog runs every 5min.
 
 ---
 
 ## Stack
 
-| Camada | Tecnologia |
-|--------|------------|
+| Layer | Technology |
+|-------|------------|
 | Backend | Python 3.11+ · Flask 3 · SQLite |
-| Frontend | HTML + CSS + JS vanilla (zero build) |
+| Frontend | HTML + CSS + vanilla JS (no build step) |
 | Runtime | macOS (launchd + Terminal.app + pbcopy + `open -a`) |
-| Deps externas (opcionais) | [`claude`](https://docs.claude.com/en/docs/claude-code) CLI, [`gh`](https://cli.github.com/) CLI, app Claude desktop |
+| External deps (optional) | [`claude`](https://docs.claude.com/en/docs/claude-code) CLI, [`gh`](https://cli.github.com/) CLI, Claude desktop app |
 
-O painel só precisa de Python e Flask. Claude/gh/Cowork entram quando você clica **Executar** — se não estiverem instalados, o painel segue funcionando e só pula essas ações.
+The panel itself only needs Python and Flask. Claude/gh/Cowork come in when you click **Execute** — if they're missing, the panel still works and just skips those actions.
 
 ---
 
 ## Setup
 
 ```bash
-git clone https://github.com/<seu-usuario>/x-bookmarks-panel.git
+git clone https://github.com/wesleysimplicio/x-bookmarks-panel.git
 cd x-bookmarks-panel
 chmod +x setup.sh
 ./setup.sh
 open http://localhost:8765
 ```
 
-O `setup.sh` é idempotente e faz:
+`setup.sh` is idempotent and does:
 
-1. Copia `.env.example` → `.env` (se não existir).
-2. Cria `.venv/` e instala Flask.
-3. Inicia o SQLite em `data/bookmarks.db`.
-4. Importa do HTML se existir (`relatorio-bookmarks-x.html`).
-5. Registra dois launchd agents: o painel e um watchdog.
+1. Copies `.env.example` → `.env` (if missing).
+2. Creates `.venv/` and installs Flask.
+3. Initializes SQLite at `data/bookmarks.db`.
+4. Imports from HTML if present (`relatorio-bookmarks-x.html`).
+5. Registers two launchd agents: the panel itself and a watchdog.
 
-### Primeiro teste sem seu HTML
+### First run without your own HTML
 
-Se ainda não tem uma fonte de triagem, copie o exemplo:
+If you don't have a triage source yet, copy the sample:
 
 ```bash
 cp examples/sample-relatorio.html relatorio-bookmarks-x.html
 curl -X POST http://localhost:8765/api/oportunidades/import
 ```
 
-Isso popula o painel com dois bookmarks sintéticos.
+That populates the panel with two synthetic bookmarks.
 
 ---
 
-## Seu HTML de bookmarks
+## Your bookmarks HTML
 
-O painel espera um arquivo `relatorio-bookmarks-x.html` com um bloco JavaScript assim:
+The panel expects a file named `relatorio-bookmarks-x.html` with a JavaScript block like this:
 
 ```html
 <script>
 const BOOKMARKS = [
   {
-    "link": "https://x.com/usuario/status/123456789",
-    "autor": "Nome Exibido",
-    "handle": "@usuario",
-    "texto": "conteúdo do tweet",
+    "link": "https://x.com/username/status/123456789",
+    "autor": "Display Name",
+    "handle": "@username",
+    "texto": "tweet body",
     "data": "2026-04-20",
     "midia": "texto|imagem|video|link",
     "categoria": "Claude Code",
     "prioridade": "agir-agora",
-    "insight": "por que este bookmark importa",
-    "acao_sugerida": "o que fazer na prática",
+    "insight": "why this bookmark matters",
+    "acao_sugerida": "what to do in practice",
     "vale_executar": true
   }
 ];
 </script>
 ```
 
-Como você produz esse HTML é problema seu: manual, scraper próprio, uma scheduled task, um agente de curadoria. Veja [`examples/sample-relatorio.html`](examples/sample-relatorio.html) para o formato completo. O importer é idempotente — já importados são atualizados, novos são inseridos, e seus campos editados no painel (`status`, `tipo_execucao`, `notas`) são preservados.
+How you produce that HTML is up to you: manual curation, your own scraper, a scheduled task, a curation agent, whatever. See [`examples/sample-relatorio.html`](examples/sample-relatorio.html) for the full format. The importer is idempotent — already-imported links are updated, new ones are inserted, and your panel-edited fields (`status`, `tipo_execucao`, `notas`) are preserved.
+
+> **Note on field names.** Internally the schema uses Portuguese names (`oportunidades`, `acao_sugerida`, `tipo_execucao`). They stay for backward compatibility with the existing SQLite schema and API payload. Feel free to open an issue if you want an English-aliased API on top.
 
 ---
 
-## Arquitetura em 30 segundos
+## Architecture in 30 seconds
 
 ```
-HTML de triagem  →  importer.py  →  SQLite (oportunidades)
-                                         ↓
-                                   Flask app.py  ←→  index.html (fetch)
-                                         ↓
-                                   executor.py  →  pbcopy + osascript + gh
-                                                  (Claude Code / Cowork / git / GitHub)
+Triage HTML  →  importer.py  →  SQLite (oportunidades)
+                                     ↓
+                                Flask app.py  ←→  index.html (fetch)
+                                     ↓
+                                executor.py  →  pbcopy + osascript + gh
+                                              (Claude Code / Cowork / git / GitHub)
 ```
 
-| Arquivo | Função |
-|---------|--------|
-| [server/app.py](server/app.py) | Flask + rotas REST |
-| [server/db.py](server/db.py) | Schema SQLite + helpers |
-| [server/importer.py](server/importer.py) | Lê array `BOOKMARKS` do HTML |
-| [server/executor.py](server/executor.py) | Abre Terminal/Cowork, cria pasta + git + `gh repo create` |
-| [index.html](index.html) | UI em JS vanilla |
+| File | Purpose |
+|------|---------|
+| [server/app.py](server/app.py) | Flask + REST routes |
+| [server/db.py](server/db.py) | SQLite schema + helpers |
+| [server/importer.py](server/importer.py) | Reads the `BOOKMARKS` array from HTML |
+| [server/executor.py](server/executor.py) | Opens Terminal/Cowork, scaffolds folder + git + `gh repo create` |
+| [index.html](index.html) | Vanilla-JS UI |
 
-Mais detalhes arquiteturais em [DESIGN.md](DESIGN.md).
+More architectural detail in [DESIGN.md](DESIGN.md).
 
 ---
 
 ## API
 
-Toda a UI consome esses endpoints. Você pode automatizar de fora igual:
+The UI consumes these endpoints. You can automate outside the panel the same way:
 
-| Método | Path | Body |
+| Method | Path | Body |
 |--------|------|------|
 | GET  | `/api/healthz` | — |
 | GET  | `/api/stats` | — |
@@ -139,13 +143,13 @@ Toda a UI consome esses endpoints. Você pode automatizar de fora igual:
 | POST | `/api/oportunidades/import` | — |
 | GET  | `/api/projetos` | — |
 
-Exemplo:
+Example:
 
 ```bash
-# Re-importar sob demanda
+# Re-import on demand
 curl -X POST http://localhost:8765/api/oportunidades/import
 
-# Disparar Claude Code + pasta nova + repo privado no GitHub
+# Fire Claude Code + new folder + private GitHub repo
 curl -X POST http://localhost:8765/api/oportunidades/1/executar \
   -H 'Content-Type: application/json' \
   -d '{"tipo":"claude","criar_projeto":true,"com_github":true}'
@@ -153,82 +157,82 @@ curl -X POST http://localhost:8765/api/oportunidades/1/executar \
 
 ---
 
-## Variáveis de ambiente
+## Environment variables
 
-Edite o `.env` (criado automaticamente pelo `setup.sh`):
+Edit `.env` (auto-created by `setup.sh`):
 
-| Variável | Padrão | O que faz |
-|----------|--------|-----------|
-| `BOOKMARKS_PORT` | `8765` | Porta do painel |
-| `BOOKMARKS_HOST` | `127.0.0.1` | Bind (deixe local; não exponha) |
-| `BOOKMARKS_LABEL_PREFIX` | `com.bookmarks.panel` | Prefixo dos labels launchd |
-| `COWORK_APP` | `Claude` | Nome do app desktop que o `open -a` abre |
-| `BOOKMARKS_HTML` | `<repo>/relatorio-bookmarks-x.html` | Caminho alternativo do HTML |
+| Variable | Default | Purpose |
+|----------|---------|---------|
+| `BOOKMARKS_PORT` | `8765` | Panel HTTP port |
+| `BOOKMARKS_HOST` | `127.0.0.1` | Bind address (keep local; do not expose) |
+| `BOOKMARKS_LABEL_PREFIX` | `com.bookmarks.panel` | launchd label prefix |
+| `COWORK_APP` | `Claude` | Desktop app name that `open -a` targets |
+| `BOOKMARKS_HTML` | `<repo>/relatorio-bookmarks-x.html` | Alternate HTML source path |
 
 ---
 
-## Comandos
+## Commands
 
 ```bash
-./setup.sh                 # setup completo (idempotente)
-./install-launchd.sh       # (re)registra como serviço sempre-online
-./start.sh                 # roda em foreground pra debug (Ctrl+C sai)
-./stop.sh                  # descarrega launchd + mata processo
-./healthcheck.sh           # ping manual no painel + restart se cair
+./setup.sh                 # full setup (idempotent)
+./install-launchd.sh       # (re)register as always-on service
+./start.sh                 # run in foreground for debug (Ctrl+C to exit)
+./stop.sh                  # unload launchd + kill process
+./healthcheck.sh           # manual ping + restart if down
 
-launchctl list | grep bookmarks    # status dos agents
-tail -f data/painel.log             # logs do server
-tail -f data/healthcheck.log        # logs do watchdog
+launchctl list | grep bookmarks    # agent status
+tail -f data/painel.log             # server logs
+tail -f data/healthcheck.log        # watchdog logs
 ```
 
 ---
 
-## Garantias de sempre-online
+## Always-on guarantees
 
-| Cenário | O que acontece |
-|---------|----------------|
-| Server crasha (exception, `kill -9`) | launchd reinicia em ≤30s (`KeepAlive` + `ThrottleInterval`) |
-| Server fica zumbi (vivo mas não responde) | watchdog detecta em ≤5min e dá `kickstart -k` |
-| Plist some / launchd descarregado | watchdog roda `install-launchd.sh` |
-| Mac reinicia | sobe no login (`RunAtLoad`) |
-| Mac dorme/acorda | sobe quando rede volta (`NetworkState=true`) |
+| Scenario | What happens |
+|----------|--------------|
+| Server crashes (exception, `kill -9`) | launchd restarts in ≤30s (`KeepAlive` + `ThrottleInterval`) |
+| Server goes zombie (alive but unresponsive) | watchdog detects in ≤5min and runs `kickstart -k` |
+| Plist missing / launchd unloaded | watchdog runs `install-launchd.sh` |
+| Mac reboots | comes back on login (`RunAtLoad`) |
+| Mac sleeps/wakes | comes back on network availability (`NetworkState=true`) |
 
 ---
 
 ## Troubleshooting
 
-- **"Server offline"** — `tail -n 50 data/painel.err.log`. Se vazio, `launchctl list | grep bookmarks`.
-- **Watchdog não ressuscita** — `tail data/healthcheck.log`.
-- **Botão Cowork não abre o app** — confirma que o app é `Claude` no Finder. Se for outro, ajusta `COWORK_APP` no `.env`.
-- **`claude` não encontrado pelo Terminal** — `which claude`. Se não estiver em `/opt/homebrew/bin` ou `/usr/local/bin`, ajuste o `PATH` dentro de `scripts/launchd/panel.plist.template` e rode `./install-launchd.sh`.
-- **`gh repo create` falha** — `gh auth login` uma vez.
-- **DB corrompeu** — `./stop.sh && rm data/bookmarks.db && ./setup.sh`.
+- **"Server offline"** — `tail -n 50 data/painel.err.log`. If empty, `launchctl list | grep bookmarks`.
+- **Watchdog not recovering** — `tail data/healthcheck.log`.
+- **Cowork button doesn't open the app** — confirm the app is called `Claude` in Finder. If not, adjust `COWORK_APP` in `.env`.
+- **Terminal can't find `claude`** — `which claude`. If not under `/opt/homebrew/bin` or `/usr/local/bin`, update the `PATH` inside `scripts/launchd/panel.plist.template` and run `./install-launchd.sh`.
+- **`gh repo create` fails** — run `gh auth login` once.
+- **DB corrupted** — `./stop.sh && rm data/bookmarks.db && ./setup.sh`.
 
 ---
 
-## Privacidade e segurança
+## Privacy and security
 
-- O painel escuta em `127.0.0.1` — ninguém na sua rede alcança.
-- Zero telemetria. Zero auth remota. Zero token no repo.
-- O `.gitignore` bloqueia `data/`, `*.db`, `relatorio-bookmarks-x.html`, `.env`, capturas, triagens, análises de perfil e as pastas geradas pelo botão **+ Novo projeto**.
-- Antes de publicar o seu fork: confirme que `git status` não lista nada sensível.
+- The panel binds to `127.0.0.1` — nobody on your network reaches it.
+- Zero telemetry. Zero remote auth. Zero tokens in the repo.
+- `.gitignore` blocks `data/`, `*.db`, `relatorio-bookmarks-x.html`, `.env`, captures, triages, profile analyses, and the folders generated by the **+ New project** button.
+- Before publishing your own fork: confirm `git status` doesn't list anything sensitive.
 
 ---
 
 ## Roadmap
 
-- [ ] Histórico de execuções filtrável na UI.
-- [ ] Webhook pra atualizar quando o pipeline de triagem rodar (em vez de polling).
-- [ ] Endpoint `POST /api/projetos/<id>/abrir` pra reabrir Claude Code num projeto existente.
-- [ ] Export CSV/JSON dos bookmarks.
-- [ ] Suporte a Linux (hoje depende de `launchctl` + `pbcopy` + AppleScript).
+- [ ] Filterable execution history in the UI.
+- [ ] Webhook that re-imports when the external triage pipeline runs (instead of polling).
+- [ ] `POST /api/projetos/<id>/abrir` endpoint to reopen Claude Code in an existing project.
+- [ ] CSV/JSON export for bookmarks.
+- [ ] Linux support (currently depends on `launchctl` + `pbcopy` + AppleScript).
 
 ---
 
-## Contribuindo
+## Contributing
 
-PRs bem-vindos. Leia [CONTRIBUTING.md](CONTRIBUTING.md).
+PRs welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md).
 
-## Licença
+## License
 
 [MIT](LICENSE).

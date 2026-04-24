@@ -6,6 +6,12 @@ O formato segue [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e o 
 
 ## [Unreleased]
 
+## [0.1.1] — 2026-04-24
+
+### Changed
+- README.md agora é a versão em inglês (canonical, primeira impressão no GitHub).
+- Versão em português movida para `README.pt-BR.md`, linkada bidirecionalmente no topo de cada arquivo.
+
 ## [0.1.0] — 2026-04-24
 
 ### Added
@@ -22,5 +28,6 @@ O formato segue [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e o 
 - Documentação: `README.md`, `CLAUDE.md`, `DESIGN.md`, `CONTRIBUTING.md`.
 - `.gitignore` bloqueando dados do usuário (DB, HTML de triagem, logs, `.env`, `.venv`, capturas, análises de perfil, pastas geradas).
 
-[Unreleased]: https://github.com/wesleysimplicio/x-bookmarks-panel/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/wesleysimplicio/x-bookmarks-panel/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/wesleysimplicio/x-bookmarks-panel/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/wesleysimplicio/x-bookmarks-panel/releases/tag/v0.1.0

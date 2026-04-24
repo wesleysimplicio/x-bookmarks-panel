@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Painel · Esteira de Bookmarks</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #141210;
+    --bg-card: #1d1a16;
+    --bg-card-hover: #252118;
+    --border: #2e2a24;
+    --border-soft: #24201b;
+    --text: #f4ede0;
+    --text-dim: #a69d8c;
+    --text-faint: #6b6356;
+    --hot: #ff7a3d;
+    --hot-soft: #3d1e10;
+    --study: #6fb3c7;
+    --study-soft: #14262c;
+    --archive: #7a7268;
+    --archive-soft: #242018;
+    --accent: #e8c77a;
+    --ok: #6ac27b;
+    --err: #d96565;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'IBM Plex Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.5;
+    padding: 2.5rem 1.8rem 4rem;
+    min-height: 100vh;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% -10%, rgba(232, 199, 122, 0.06), transparent),
+      radial-gradient(ellipse 60% 40% at 20% 100%, rgba(255, 122, 61, 0.04), transparent);
+  }
+  .container { max-width: 1280px; margin: 0 auto; }
+
+  /* HEADER */
+  header { margin-bottom: 2.2rem; display: flex; justify-content: space-between; align-items: flex-end; gap: 1rem; flex-wrap: wrap; }
+  .eyebrow {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.7rem; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--text-faint); margin-bottom: 0.6rem;
+  }
+  h1 {
+    font-family: 'Fraunces', serif; font-weight: 400;
+    font-size: clamp(1.9rem, 4vw, 2.8rem); line-height: 1.05;
+    letter-spacing: -0.02em;
+  }
+  h1 em { font-style: italic; color: var(--accent); font-weight: 300; }
+  .header-actions { display: flex; gap: 0.5rem; align-items: center; }
+  .btn-mini {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.75rem; padding: 0.45rem 0.85rem;
+    background: var(--bg-card); border: 1px solid var(--border);
+    color: var(--text-dim); cursor: pointer;
+    border-radius: 4px; transition: all 0.15s;
+  }
+  .btn-mini:hover { color: var(--text); border-color: var(--text-faint); }
+
+  /* STATS */
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 1px;
+    background: var(--border-soft);
+    border: 1px solid var(--border-soft);
+    margin-bottom: 1.5rem;
+  }
+  .stat { background: var(--bg); padding: 1rem 1.2rem; }
+  .stat-value { font-family: 'Fraunces', serif; font-size: 1.85rem; font-weight: 400; line-height: 1; }
+  .stat-label {
+    font-family: 'IBM Plex Mono', monospace; font-size: 0.66rem;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--text-dim); margin-top: 0.45rem;
+  }
+  .stat.hot .stat-value { color: var(--hot); }
+  .stat.study .stat-value { color: var(--study); }
+  .stat.archive .stat-value { color: var(--archive); }
+  .stat.ok .stat-value { color: var(--ok); }
+
+  /* FILTROS */
+  .filters {
+    display: flex; flex-wrap: wrap; gap: 0.5rem;
+    margin-bottom: 1rem; align-items: center;
+  }
+  .filter-label {
+    font-family: 'IBM Plex Mono', monospace; font-size: 0.7rem;
+    letter-spacing: 0.15em; text-transform: uppercase;
+    color: var(--text-faint); margin-right: 0.4rem;
+  }
+  .chip {
+    font-family: 'IBM Plex Mono', monospace; font-size: 0.76rem;
+    padding: 0.35rem 0.85rem; background: var(--bg-card);
+    border: 1px solid var(--border); color: var(--text-dim);
+    cursor: pointer; transition: all 0.15s; border-radius: 999px;
+  }
+  .chip:hover { color: var(--text); border-color: var(--text-faint); }
+  .chip.active { background: var(--text); color: var(--bg); border-color: var(--text); }
+
+  /* CARDS */
+  .cards { display: grid; gap: 0.9rem; }
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--archive);
+    padding: 1.4rem 1.6rem;
+    transition: all 0.15s;
+  }
+  .card:hover { background: var(--bg-card-hover); border-color: var(--text-faint); }
+  .card[data-priority="agir-agora"]      { border-left-color: var(--hot); }
+  .card[data-priority="estudar-depois"]  { border-left-color: var(--study); }
+  .card[data-priority="arquivar"]        { border-left-color: var(--archive); }
+  .card[data-status="executado"]         { opacity: 0.55; }
+  .card[data-status="arquivado"]         { opacity: 0.4; }
+  .card[data-status="descartado"]        { opacity: 0.3; }
+
+  .card-top {
+    display: flex; gap: 0.55rem; align-items: center;
+    margin-bottom: 0.7rem; flex-wrap: wrap;
+  }
+  .tag {
+    font-family: 'IBM Plex Mono', monospace; font-size: 0.66rem;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    padding: 0.22rem 0.6rem; border-radius: 2px;
+  }
+  .tag-priority.agir-agora     { background: var(--hot-soft);    color: var(--hot); }
+  .tag-priority.estudar-depois { background: var(--study-soft);  color: var(--study); }
+  .tag-priority.arquivar       { background: var(--archive-soft); color: var(--archive); }
+  .tag-cat { background: transparent; color: var(--text-dim); border: 1px solid var(--border); }
+  .tag-status {
+    background: transparent; color: var(--text-faint);
+    border: 1px solid var(--border-soft);
+  }
+  .tag-status[data-s="em_progresso"] { color: var(--accent); border-color: var(--accent); }
+  .tag-status[data-s="executado"]    { color: var(--ok); border-color: var(--ok); }
+
+  .insight {
+    font-family: 'Fraunces', serif; font-size: 1.1rem; line-height: 1.35;
+    margin-bottom: 0.55rem;
+  }
+  .action {
+    font-size: 0.88rem; color: var(--text-dim); margin-bottom: 0.65rem;
+  }
+  .action::before { content: '→ '; color: var(--accent); font-weight: 500; }
+  .meta-line {
+    font-family: 'IBM Plex Mono', monospace; font-size: 0.72rem;
+    color: var(--text-faint); display: flex; gap: 0.8rem; flex-wrap: wrap;
+    padding-top: 0.7rem; border-top: 1px solid var(--border-soft);
+    margin-top: 0.7rem;
+  }
+  .meta-line a { color: var(--text-dim); text-decoration: none; border-bottom: 1px dashed var(--border); }
+  .meta-line a:hover { color: var(--accent); }
+
+  /* AÇÕES */
+  .actions-bar {
+    display: flex; gap: 0.5rem; flex-wrap: wrap;
+    margin-top: 1rem;
+  }
+  .btn {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.75rem; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.05em;
+    padding: 0.5rem 0.9rem; cursor: pointer;
+    border-radius: 3px; transition: all 0.15s;
+    background: transparent;
+    display: inline-flex; align-items: center; gap: 0.4rem;
+  }
+  .btn-claude   { border: 1px solid var(--hot);    color: var(--hot); }
+  .btn-claude:hover   { background: var(--hot);    color: #111; }
+  .btn-cowork   { border: 1px solid var(--study);  color: var(--study); }
+  .btn-cowork:hover   { background: var(--study);  color: #111; }
+  .btn-projeto  { border: 1px solid var(--accent); color: var(--accent); }
+  .btn-projeto:hover  { background: var(--accent); color: #111; }
+  .btn-status   { border: 1px solid var(--border); color: var(--text-dim); }
+  .btn-status:hover   { color: var(--text); border-color: var(--text-faint); }
+  .btn.recommended { box-shadow: 0 0 0 2px rgba(232,199,122,0.18); }
+
+  /* checkbox inline */
+  .check-row {
+    display: flex; gap: 1rem; flex-wrap: wrap;
+    margin-top: 0.7rem; font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.74rem; color: var(--text-dim);
+  }
+  .check-row label { display: inline-flex; gap: 0.4rem; align-items: center; cursor: pointer; }
+
+  /* search bar */
+  .search-row {
+    display: flex; align-items: center; gap: 0.8rem;
+    margin-bottom: 1rem;
+  }
+  .search-row input[type="search"] {
+    flex: 1;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 0.95rem;
+    padding: 0.7rem 1rem;
+    border-radius: 6px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .search-row input[type="search"]:focus { border-color: var(--accent); }
+  .search-row input[type="search"]::placeholder { color: var(--text-faint); }
+  .search-meta {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--text-faint);
+    white-space: nowrap;
+  }
+  /* destaca matches no card */
+  mark.hl {
+    background: rgba(232,199,122,0.25);
+    color: var(--accent);
+    padding: 0 2px; border-radius: 2px;
+  }
+
+  /* progress flags (instalado / aplicado / projeto iniciado) */
+  .flags {
+    display: flex; gap: 0.4rem; flex-wrap: wrap;
+    margin: 0.7rem 0 0.2rem;
+  }
+  .flag {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.7rem; letter-spacing: 0.05em;
+    padding: 0.32rem 0.7rem;
+    background: transparent;
+    border: 1px dashed var(--border);
+    color: var(--text-faint);
+    border-radius: 999px;
+    cursor: pointer;
+    transition: all 0.15s;
+    user-select: none;
+  }
+  .flag:hover { color: var(--text-dim); border-color: var(--text-faint); }
+  .flag.on {
+    background: rgba(106,194,123,0.10);
+    border: 1px solid var(--ok);
+    color: var(--ok);
+  }
+  .flag.on:hover { background: rgba(106,194,123,0.18); }
+  .flag .dot { display: inline-block; margin-right: 0.35rem; opacity: 0.8; }
+
+  /* TOAST */
+  .toast {
+    position: fixed; bottom: 2rem; left: 50%;
+    transform: translateX(-50%) translateY(120%);
+    background: #1a1a1a; color: #f0ead6;
+    padding: 0.8rem 1.3rem; border: 1px solid var(--accent);
+    border-radius: 3px; font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.78rem; z-index: 9999;
+    transition: transform 0.25s; max-width: 90vw;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+  .toast.err { border-color: var(--err); color: var(--err); }
+  .toast.ok  { border-color: var(--ok);  color: var(--ok); }
+
+  .empty {
+    text-align: center; padding: 3rem 1rem;
+    color: var(--text-faint);
+    font-family: 'Fraunces', serif; font-style: italic;
+  }
+  .offline {
+    background: var(--err); color: #111;
+    padding: 0.8rem 1.2rem;
+    font-family: 'IBM Plex Mono', monospace; font-size: 0.8rem;
+    margin-bottom: 1rem; border-radius: 3px;
+  }
+  details summary {
+    cursor: pointer; font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.74rem; color: var(--text-faint);
+    padding-top: 0.7rem;
+  }
+  details[open] summary { color: var(--text-dim); }
+  pre.log {
+    background: #0d0c0a; border: 1px solid var(--border-soft);
+    padding: 0.8rem; margin-top: 0.5rem;
+    font-family: 'IBM Plex Mono', monospace; font-size: 0.72rem;
+    color: var(--text-dim); white-space: pre-wrap;
+    border-radius: 3px; max-height: 300px; overflow: auto;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <div>
+      <div class="eyebrow">Painel local · http://localhost:8765</div>
+      <h1>Esteira de <em>oportunidades</em>.</h1>
+    </div>
+    <div class="header-actions">
+      <button class="btn-mini" id="btn-reimport">Re-importar HTML</button>
+      <a class="btn-mini" href="/relatorio" target="_blank">Ver relatório</a>
+    </div>
+  </header>
+
+  <div id="offline-banner" class="offline" style="display:none;">
+    Server offline. Roda <code>./start.sh</code> na pasta bookmarks.
+  </div>
+
+  <div class="stats" id="stats"></div>
+
+  <div class="search-row">
+    <input id="search" type="search" placeholder="Buscar por título, descrição, autor, link…" autocomplete="off" />
+    <span id="search-meta" class="search-meta"></span>
+  </div>
+
+  <div class="filters" id="filters">
+    <span class="filter-label">Prioridade</span>
+    <button class="chip active" data-filter="prioridade" data-value="">Tudo</button>
+    <button class="chip" data-filter="prioridade" data-value="agir-agora">🔥 Agir agora</button>
+    <button class="chip" data-filter="prioridade" data-value="estudar-depois">📚 Estudar depois</button>
+    <button class="chip" data-filter="prioridade" data-value="arquivar">🗄️ Arquivar</button>
+  </div>
+  <div class="filters" id="filters-status">
+    <span class="filter-label">Status</span>
+    <button class="chip active" data-filter="status" data-value="">Todos</button>
+    <button class="chip" data-filter="status" data-value="novo">Novo</button>
+    <button class="chip" data-filter="status" data-value="em_progresso">Em progresso</button>
+    <button class="chip" data-filter="status" data-value="executado">Executado</button>
+    <button class="chip" data-filter="status" data-value="arquivado">Arquivado</button>
+    <button class="chip" data-filter="status" data-value="descartado">Descartado</button>
+  </div>
+  <div class="filters" id="filters-progresso">
+    <span class="filter-label">Progresso</span>
+    <button class="chip active" data-filter="progresso" data-value="">Tudo</button>
+    <button class="chip" data-filter="progresso" data-value="instalado">✓ Instalado</button>
+    <button class="chip" data-filter="progresso" data-value="aplicado">✓ Aplicado</button>
+    <button class="chip" data-filter="progresso" data-value="projeto_iniciado">✓ Projeto iniciado</button>
+    <button class="chip" data-filter="progresso" data-value="pendente">Sem progresso</button>
+  </div>
+
+  <div class="toast" id="toast">…</div>
+  <div class="cards" id="cards"></div>
+  <div class="empty" id="empty" style="display:none;">Nenhum item com esses filtros.</div>
+
+</div>
+
+<script>
+const API = ''; // mesmo host
+const PRIO_LABEL = { 'agir-agora': '🔥 Agir agora', 'estudar-depois': '📚 Estudar depois', 'arquivar': '🗄️ Arquivar' };
+const STATUS_LABEL = { novo:'novo', em_progresso:'em progresso', executado:'executado', arquivado:'arquivado', descartado:'descartado' };
+const state = { prioridade: '', status: '', progresso: '', search: '', items: [] };
+
+function toast(msg, kind='') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + kind;
+  clearTimeout(window.__toastTimer);
+  window.__toastTimer = setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+async function api(path, opts={}) {
+  try {
+    const r = await fetch(API + path, {
+      headers: { 'Content-Type': 'application/json' },
+      ...opts,
+    });
+    if (!r.ok) {
+      const data = await r.json().catch(()=>({error:'erro'}));
+      throw new Error(data.error || ('HTTP ' + r.status));
+    }
+    return await r.json();
+  } catch (e) {
+    if (e.message === 'Failed to fetch') {
+      document.getElementById('offline-banner').style.display = 'block';
+    }
+    throw e;
+  }
+}
+
+function escapeHtml(s) {
+  return (s ?? '').toString()
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+async function renderStats() {
+  const s = await api('/api/stats');
+  const html = `
+    <div class="stat"><div class="stat-value">${s.total}</div><div class="stat-label">Total</div></div>
+    <div class="stat hot"><div class="stat-value">${s.agir_agora}</div><div class="stat-label">Agir agora</div></div>
+    <div class="stat study"><div class="stat-value">${s.estudar}</div><div class="stat-label">Estudar</div></div>
+    <div class="stat archive"><div class="stat-value">${s.arquivar}</div><div class="stat-label">Arquivar</div></div>
+    <div class="stat"><div class="stat-value">${s.novo}</div><div class="stat-label">Novos</div></div>
+    <div class="stat ok"><div class="stat-value">${s.executado}</div><div class="stat-label">Executados</div></div>
+    <div class="stat"><div class="stat-value">${s.projetos}</div><div class="stat-label">Projetos</div></div>
+  `;
+  document.getElementById('stats').innerHTML = html;
+}
+
+function recommendedTipo(op) {
+  // mesma heurística do executor.py (versão simplificada para sinalização visual)
+  const codeKw = ['claude code','plugin','skill','clonar','clone','git','repo','github','config','mcp','instalar','projeto em','scaffold','mvp','docker','python','node','react','c#'];
+  const deskKw = ['ler ','skim','olhar','assistir','navegar','demo','landing','meta ads','tiktok','instagram','feed','playbook','thread','artigo','curso'];
+  const bag = ((op.acao_sugerida||'') + ' ' + (op.insight||'') + ' ' + (op.texto||'')).toLowerCase();
+  const codeCats = ['Claude Code','Agents','Scraping','Automação','Open-source','AI Tools'];
+  const deskCats = ['Marketing','Meta Ads','TikTok','SaaS','Produtividade','Meta'];
+  let c = codeKw.filter(k => bag.includes(k)).length;
+  let d = deskKw.filter(k => bag.includes(k)).length;
+  if (codeCats.includes(op.categoria)) c += 2;
+  if (deskCats.includes(op.categoria)) d += 2;
+  return c >= d ? 'claude' : 'cowork';
+}
+
+function highlight(text, q) {
+  if (!q || !text) return escapeHtml(text || '');
+  const safe = escapeHtml(text);
+  const parts = q.split(/\s+/).filter(Boolean).map(p =>
+    p.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&')
+  );
+  if (!parts.length) return safe;
+  const re = new RegExp('(' + parts.join('|') + ')', 'gi');
+  return safe.replace(re, '<mark class="hl">$1</mark>');
+}
+
+function cardHTML(op) {
+  const reco = recommendedTipo(op);
+  const q = state.search;
+  const flag = (key, label) => `
+    <button class="flag ${op[key] ? 'on' : ''}" data-act="flag" data-key="${key}">
+      <span class="dot">${op[key] ? '✓' : '○'}</span>${label}
+    </button>`;
+  return `
+    <div class="card" data-priority="${op.prioridade}" data-status="${op.status}" data-id="${op.id}">
+      <div class="card-top">
+        <span class="tag tag-priority ${op.prioridade}">${PRIO_LABEL[op.prioridade] || op.prioridade}</span>
+        <span class="tag tag-cat">${escapeHtml(op.categoria || '—')}</span>
+        <span class="tag tag-status" data-s="${op.status}">${STATUS_LABEL[op.status] || op.status}</span>
+        ${op.vale_executar ? '<span class="tag" style="color:var(--accent);border:1px solid var(--accent);">vale executar</span>' : ''}
+      </div>
+      <div class="insight">${highlight(op.insight || '(sem insight)', q)}</div>
+      <div class="action">${highlight(op.acao_sugerida || '', q)}</div>
+      <div class="flags">
+        ${flag('instalado', 'Instalado')}
+        ${flag('aplicado', 'Aplicado')}
+        ${flag('projeto_iniciado', 'Projeto iniciado')}
+      </div>
+      <div class="meta-line">
+        <span>${highlight((op.autor||'') + ' ' + (op.handle||''), q)}</span>
+        <span>${escapeHtml(op.data_bookmark || '')}</span>
+        <a href="${escapeHtml(op.link)}" target="_blank">abrir no X ↗</a>
+      </div>
+      <div class="actions-bar">
+        <button class="btn btn-claude ${reco==='claude'?'recommended':''}" data-act="exec" data-tipo="claude">📟 Claude Code</button>
+        <button class="btn btn-cowork ${reco==='cowork'?'recommended':''}" data-act="exec" data-tipo="cowork">🖥️ Cowork</button>
+        <button class="btn btn-projeto" data-act="exec" data-tipo="claude" data-projeto="1">📁 + Novo projeto</button>
+        <button class="btn btn-status" data-act="status" data-status="executado">✓ Executado</button>
+        <button class="btn btn-status" data-act="status" data-status="arquivado">🗄 Arquivar</button>
+        <button class="btn btn-status" data-act="status" data-status="descartado">✗ Descartar</button>
+      </div>
+      <div class="check-row">
+        <label><input type="checkbox" data-projeto-flag> criar pasta + git ao executar</label>
+        <label><input type="checkbox" data-github-flag> incluir gh repo create (privado)</label>
+      </div>
+      <details class="exec-log" style="display:none;">
+        <summary>log da execução</summary>
+        <pre class="log"></pre>
+      </details>
+    </div>
+  `;
+}
+
+function applyFilters(items) {
+  const q = (state.search || '').trim().toLowerCase();
+  const tokens = q.split(/\s+/).filter(Boolean);
+  return items.filter(o => {
+    if (state.prioridade && o.prioridade !== state.prioridade) return false;
+    if (state.status && o.status !== state.status) return false;
+    if (state.progresso) {
+      if (state.progresso === 'pendente') {
+        if (o.instalado || o.aplicado || o.projeto_iniciado) return false;
+      } else if (!o[state.progresso]) {
+        return false;
+      }
+    }
+    if (tokens.length) {
+      const hay = [
+        o.insight, o.acao_sugerida, o.texto, o.autor, o.handle,
+        o.categoria, o.link, o.notas,
+      ].filter(Boolean).join(' ').toLowerCase();
+      for (const t of tokens) {
+        if (!hay.includes(t)) return false;
+      }
+    }
+    return true;
+  });
+}
+
+async function refresh() {
+  const items = await api('/api/oportunidades');
+  state.items = items;
+  renderCards();
+  renderStats();
+}
+
+function renderCards() {
+  const filtered = applyFilters(state.items);
+  const wrap = document.getElementById('cards');
+  wrap.innerHTML = filtered.map(cardHTML).join('');
+  document.getElementById('empty').style.display = filtered.length ? 'none' : 'block';
+  const meta = document.getElementById('search-meta');
+  if (state.search) {
+    meta.textContent = `${filtered.length} de ${state.items.length}`;
+  } else {
+    meta.textContent = `${filtered.length} itens`;
+  }
+}
+
+document.addEventListener('click', async (e) => {
+  // filtros
+  const chip = e.target.closest('.chip');
+  if (chip) {
+    const filter = chip.dataset.filter;
+    state[filter] = chip.dataset.value;
+    chip.parentElement.querySelectorAll('.chip').forEach(c => c.classList.toggle('active', c === chip));
+    renderCards();
+    return;
+  }
+
+  // botão de ação
+  const btn = e.target.closest('button[data-act]');
+  if (!btn) return;
+  const card = btn.closest('.card');
+  const opId = card.dataset.id;
+  const act = btn.dataset.act;
+
+  if (act === 'flag') {
+    const key = btn.dataset.key;
+    const op = state.items.find(o => String(o.id) === String(opId));
+    const next = op[key] ? 0 : 1;
+    btn.classList.toggle('on', !!next);
+    btn.querySelector('.dot').textContent = next ? '✓' : '○';
+    try {
+      const updated = await api(`/api/oportunidades/${opId}`, {
+        method: 'POST', body: JSON.stringify({ [key]: !!next }),
+      });
+      Object.assign(op, updated);
+      toast(`${key} → ${next ? 'ativado' : 'desativado'}`, 'ok');
+    } catch (err) {
+      // rollback visual
+      btn.classList.toggle('on', !next);
+      btn.querySelector('.dot').textContent = !next ? '✓' : '○';
+      toast('Erro: ' + err.message, 'err');
+    }
+    return;
+  }
+
+  if (act === 'status') {
+    const status = btn.dataset.status;
+    try {
+      await api(`/api/oportunidades/${opId}`, { method: 'POST', body: JSON.stringify({ status }) });
+      toast(`Status → ${status}`, 'ok');
+      refresh();
+    } catch (err) { toast('Erro: ' + err.message, 'err'); }
+    return;
+  }
+
+  if (act === 'exec') {
+    const tipo = btn.dataset.tipo;
+    const fromButton = !!btn.dataset.projeto;
+    const checkbox = card.querySelector('[data-projeto-flag]');
+    const ghBox = card.querySelector('[data-github-flag]');
+    const criar = fromButton || (checkbox && checkbox.checked);
+    const com_github = !!(ghBox && ghBox.checked);
+    btn.disabled = true;
+    const original = btn.textContent;
+    btn.textContent = '… executando';
+    try {
+      const res = await api(`/api/oportunidades/${opId}/executar`, {
+        method: 'POST',
+        body: JSON.stringify({ tipo, criar_projeto: criar, com_github }),
+      });
+      const det = card.querySelector('.exec-log');
+      det.style.display = 'block';
+      det.querySelector('pre').textContent = res.log || JSON.stringify(res, null, 2);
+      det.open = true;
+      toast(res.ok ? `OK: ${tipo} disparado` : 'Erro na execução', res.ok ? 'ok' : 'err');
+      refresh();
+    } catch (err) {
+      toast('Erro: ' + err.message, 'err');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = original;
+    }
+  }
+});
+
+document.getElementById('btn-reimport').addEventListener('click', async () => {
+  try {
+    const res = await api('/api/oportunidades/import', { method: 'POST' });
+    toast(`Importado: ${res.inseridos} novos, ${res.atualizados} atualizados`, 'ok');
+    refresh();
+  } catch (err) { toast('Erro: ' + err.message, 'err'); }
+});
+
+// busca: debounce + atalhos
+const $search = document.getElementById('search');
+let __searchTimer;
+$search.addEventListener('input', (e) => {
+  clearTimeout(__searchTimer);
+  __searchTimer = setTimeout(() => {
+    state.search = e.target.value;
+    renderCards();
+  }, 120);
+});
+// "/" foca a busca; "Esc" limpa
+document.addEventListener('keydown', (e) => {
+  if (e.key === '/' && document.activeElement !== $search) {
+    e.preventDefault();
+    $search.focus();
+    $search.select();
+  } else if (e.key === 'Escape' && document.activeElement === $search) {
+    $search.value = '';
+    state.search = '';
+    renderCards();
+    $search.blur();
+  }
+});
+
+// inicial
+refresh().catch(err => console.error(err));
+// reimporta auto a cada 5 min e refresca a cada 1 min (cobre caso de a task agendada
+// ter editado o HTML)
+setInterval(refresh, 60_000);
+</script>
+</body>
+</html>

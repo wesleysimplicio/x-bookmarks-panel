@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Sample · Bookmarks Report</title>
+</head>
+<body>
+<h1>Sample Bookmarks Report</h1>
+<p>Arquivo de exemplo. O painel lê o array <code>BOOKMARKS</code> abaixo
+e importa no SQLite. Substitua pelo seu próprio pipeline de triagem
+(manual, scraper, scheduled task, agente, etc.).</p>
+
+<script>
+const BOOKMARKS = [
+  {
+    "link": "https://x.com/demo_user/status/1111111111111111111",
+    "autor": "Demo User",
+    "handle": "@demo_user",
+    "texto": "A toy example tweet describing a useful pattern.",
+    "data": "2026-04-20",
+    "midia": "texto",
+    "categoria": "Claude Code",
+    "prioridade": "agir-agora",
+    "insight": "Por que este bookmark importa — uma frase curta.",
+    "acao_sugerida": "O que fazer na prática — ex.: instalar plugin X, clonar repo Y, testar config Z.",
+    "vale_executar": true
+  },
+  {
+    "link": "https://x.com/another_demo/status/2222222222222222222",
+    "autor": "Another Demo",
+    "handle": "@another_demo",
+    "texto": "Another synthetic example, desktop-style task.",
+    "data": "2026-04-21",
+    "midia": "link",
+    "categoria": "Marketing",
+    "prioridade": "estudar-depois",
+    "insight": "Algo que precisa de leitura/análise antes de virar projeto.",
+    "acao_sugerida": "Ler o link, resumir em 5 bullets, decidir se vira MVP.",
+    "vale_executar": false
+  }
+];
+</script>
+</body>
+</html>

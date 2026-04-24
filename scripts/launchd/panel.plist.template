@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>__LABEL__</string>
+
+  <key>WorkingDirectory</key>
+  <string>__REPO__/server</string>
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>__REPO__/.venv/bin/python</string>
+    <string>__REPO__/server/app.py</string>
+  </array>
+
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>BOOKMARKS_PORT</key>
+    <string>__PORT__</string>
+    <key>PATH</key>
+    <string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin</string>
+    <key>PYTHONUNBUFFERED</key>
+    <string>1</string>
+  </dict>
+
+  <key>RunAtLoad</key>
+  <true/>
+
+  <key>KeepAlive</key>
+  <dict>
+    <key>SuccessfulExit</key>
+    <false/>
+    <key>Crashed</key>
+    <true/>
+    <key>NetworkState</key>
+    <true/>
+  </dict>
+
+  <key>ThrottleInterval</key>
+  <integer>30</integer>
+
+  <key>ProcessType</key>
+  <string>Background</string>
+
+  <key>LaunchOnlyOnce</key>
+  <false/>
+
+  <key>StandardOutPath</key>
+  <string>__REPO__/data/painel.log</string>
+  <key>StandardErrorPath</key>
+  <string>__REPO__/data/painel.err.log</string>
+
+  <key>SessionCreate</key>
+  <true/>
+</dict>
+</plist>

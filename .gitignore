@@ -1,0 +1,46 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+.Python
+
+# Data (DB + logs + tudo que é gerado)
+data/
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+
+# HTML privado do usuário (bookmarks reais)
+relatorio-bookmarks-x.html
+captura-*.json
+perfil-analise-*.md
+fila-esteira-*.md
+*- Triagem bookmarks X*.md
+
+# Pastas geradas pelo botão "Novo projeto"
+# (cada slug vira uma subpasta; todas ficam fora do git do painel)
+/[a-z0-9]*-*/
+
+# Scaffolds/drafts locais
+scaffolds-sugeridos/
+
+# Ambiente
+.env
+.env.local
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# launchd plists renderizados localmente
+com.*.plist

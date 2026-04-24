@@ -1,133 +1,135 @@
-# DESIGN.md — Decisões de arquitetura
+# DESIGN.md — Architecture decisions
 
-Por que o projeto é desse jeito. Quem está lendo pra entender, estender ou contestar, comece aqui.
+Why the project is the way it is. If you're reading to understand, extend, or push back on it, start here.
 
-## Princípios
+## Principles
 
-1. **Local-first, sempre.** O painel roda no Mac do usuário, escuta em `127.0.0.1`, guarda tudo em SQLite local. Nenhuma rede externa no hot path. Nenhum token no repo.
-2. **Menor peça que funciona.** Flask + SQLite + HTML vanilla. Sem ORM, sem bundler, sem frontend framework, sem container. Quem lê a codebase em 10min consegue fazer PR.
-3. **Idempotência em tudo que toca o SO.** `setup.sh`, `install-launchd.sh`, `import_html()` podem rodar 1 ou 100 vezes — o resultado é o mesmo.
-4. **Curadoria é plugável.** O painel não faz triagem; ele lê o resultado da triagem. O contrato é um arquivo HTML com o array `BOOKMARKS`. De onde vem (você, um agente, um scraper, um cron) é irrelevante pro painel.
-5. **Falhas externas não param o núcleo.** Faltou `gh`? Loga e segue. Faltou o app Claude? Cola no clipboard mesmo assim. Faltou o HTML? Painel sobe vazio e te mostra zero cards.
-
----
-
-## Decisões com trade-offs
-
-### Flask (não FastAPI / Starlette / Express)
-
-Escolha: Flask 3 puro, sem Blueprints.
-
-**Por quê**: o app inteiro cabe num único `app.py` de ~140 linhas. Não precisa async — as operações lentas (osascript, subprocess, launchctl) são chamadas do Mac e já bloqueiam o request do usuário mesmo. Latência não importa aqui; a UI faz polling de 60s.
-
-**Custo**: se um dia precisar abrir WebSockets pra push-updates, muda pra FastAPI + uvicorn. Migração trivial porque as rotas são idiomáticas.
-
-### SQLite (não Postgres / DuckDB / arquivo JSON)
-
-Escolha: SQLite com schema SQL puro em `server/db.py:SCHEMA`.
-
-**Por quê**: um arquivo, zero servidor, transações ACID, suporta triggers (usado pra `updated_at`), e FK on-delete. Cabem dezenas de milhares de bookmarks numa query em <10ms.
-
-**Custo**: concorrência é single-writer. Como o painel só aceita writes do próprio usuário via UI, isso não importa.
-
-### Sem ORM
-
-Escolha: `sqlite3` + `Row` direto.
-
-**Por quê**: schema cabe na cabeça. SQLAlchemy/Peewee adicionariam uma camada que não puxa o próprio peso num projeto dessa escala. `PRAGMA foreign_keys = ON` + um `migrate()` idempotente resolve evolução.
-
-### Heurística de classificação vs ML
-
-Escolha: listas de keywords (`CODE_KEYWORDS`, `DESKTOP_KEYWORDS`) + bônus por categoria.
-
-**Por quê**: a taxonomia é do próprio usuário. Quando ele vê uma classificação errada, edita a keyword ou clica no outro botão — leva 2s. Um classificador ML seria over-engineering, treinaria em dados escassos, e ainda precisaria do override manual.
-
-A UI espelha a heurística em `index.html:recommendedTipo()` pra sinalização visual. Manter as duas listas em sincronia é manual (regra escrita em [CLAUDE.md](CLAUDE.md) pra quem editar).
-
-### launchd (não systemd / cron / PM2)
-
-Escolha: dois user agents launchd + watchdog periódico.
-
-**Por quê**: o target é macOS, e `launchd` é o nativo. `KeepAlive` + `Crashed=true` + `NetworkState=true` cobrem os casos de crash, wake-from-sleep e boot. Um segundo agent (`StartInterval=300`) roda o `healthcheck.sh` pra pegar o cenário "processo vivo mas não responde" — algo que `KeepAlive` sozinho não resolve.
-
-**Custo**: não portável pra Linux. Quando alguém quiser rodar lá, substitui os dois plists por um systemd service com `Restart=always` + um timer pra healthcheck. Os scripts em bash são independentes.
-
-### Botão "+ Novo projeto" cria repositório com `gh`
-
-Escolha: o painel delega a criação pra `gh repo create --private --source . --push`.
-
-**Por quê**: usar a CLI oficial do GitHub evita manter token OAuth no painel. O `gh` já cuida de auth, keyring, 2FA e erros de rede. Quando `gh` não está instalado ou autenticado, o painel cria o repo local com `git init` e pula a parte remota.
-
-### Clipboard + osascript pra acionar o Claude Code
-
-Escolha: `pbcopy(prompt)` + `open terminal with command "claude '<prompt>'"` via AppleScript.
-
-**Por quê**: o Claude Code é uma CLI de terminal. Pra passar um prompt longo de forma confiável, duas opções: `claude "$(pbpaste)"` (frágil com aspas/quebras de linha) ou passar inline via `shlex.quote`. Optamos pela segunda, com o clipboard como plano B — se o terminal falhar, o usuário ainda tem o prompt pra colar manualmente.
-
-O mesmo raciocínio vale pra Cowork: `open -a "Claude"` não aceita argumento de texto, então a única via é o clipboard + ⌘V manual.
+1. **Local-first, always.** The panel runs on the user's Mac, listens on `127.0.0.1`, and stores everything in local SQLite. No external network on the hot path. No tokens in the repo.
+2. **Smallest thing that works.** Flask + SQLite + vanilla HTML. No ORM, no bundler, no frontend framework, no container. Someone who reads the codebase for 10 minutes can ship a PR.
+3. **Idempotent for anything that touches the OS.** `setup.sh`, `install-launchd.sh`, `import_html()` can run once or a hundred times — same result.
+4. **Curation is pluggable.** The panel doesn't triage; it reads the output of your triage. The contract is an HTML file with a `BOOKMARKS` array. Where it comes from (you, an agent, a scraper, a cron) is irrelevant to the panel.
+5. **External failures don't break the core.** `gh` missing? Log and continue. Claude app missing? Still copy to clipboard. HTML missing? Panel boots empty and shows zero cards.
 
 ---
 
-## Modelo de dados
+## Decisions with trade-offs
 
-Três tabelas em `server/db.py:SCHEMA`.
+### Flask (not FastAPI / Starlette / Express)
 
-### `oportunidades` (uma linha por bookmark)
+Pick: plain Flask 3, no Blueprints.
 
-| Coluna | Tipo | Notas |
+**Why**: the whole app fits in a single ~140-line `app.py`. No need for async — the slow operations (osascript, subprocess, launchctl) are Mac calls that would block the user's request anyway. Latency doesn't matter here; the UI polls every 60s.
+
+**Cost**: if push-updates via WebSockets ever become relevant, switch to FastAPI + uvicorn. Migration is trivial because the routes are idiomatic.
+
+### SQLite (not Postgres / DuckDB / JSON file)
+
+Pick: SQLite with plain SQL schema in `server/db.py:SCHEMA`.
+
+**Why**: a single file, no server, ACID transactions, triggers (used for `updated_at`), and FK on-delete. Tens of thousands of bookmarks finish a query in <10ms.
+
+**Cost**: concurrency is single-writer. Since the panel only accepts writes from the UI owner, this is fine.
+
+### No ORM
+
+Pick: `sqlite3` + `Row` directly.
+
+**Why**: the schema fits in your head. SQLAlchemy/Peewee would add a layer that doesn't pay for itself at this scale. `PRAGMA foreign_keys = ON` plus an idempotent `migrate()` covers evolution.
+
+### Heuristic classification vs ML
+
+Pick: keyword lists (`CODE_KEYWORDS`, `DESKTOP_KEYWORDS`) plus category bonuses.
+
+**Why**: the taxonomy belongs to the user. When a classification misses, they edit a keyword or click the other button — 2 seconds. An ML classifier would be over-engineering, would train on scarce data, and would still need manual override.
+
+The UI mirrors the heuristic in `index.html:recommendedTipo()` for visual hinting. Keeping the two lists in sync is manual (documented in [CLAUDE.md](CLAUDE.md) for anyone editing them).
+
+### launchd (not systemd / cron / PM2)
+
+Pick: two launchd user agents plus a periodic watchdog.
+
+**Why**: macOS is the target, and `launchd` is native. `KeepAlive` + `Crashed=true` + `NetworkState=true` cover crashes, wake-from-sleep, and boot. A second agent (`StartInterval=300`) runs `healthcheck.sh` to catch the "process alive but unresponsive" case — something `KeepAlive` alone can't.
+
+**Cost**: not portable to Linux. When someone wants to run it there, swap the two plists for a systemd service with `Restart=always` plus a timer for the healthcheck. The bash scripts are independent.
+
+### "+ New project" uses `gh` to create the repository
+
+Pick: the panel delegates remote creation to `gh repo create --private --source . --push`.
+
+**Why**: using the official GitHub CLI avoids storing an OAuth token in the panel. `gh` already handles auth, keychain, 2FA, and network errors. When `gh` isn't installed or authenticated, the panel still creates the local repo with `git init` and skips the remote step.
+
+### Clipboard + osascript to invoke Claude Code
+
+Pick: `pbcopy(prompt)` + `open terminal with command "claude '<prompt>'"` via AppleScript.
+
+**Why**: Claude Code is a terminal CLI. To hand it a long prompt reliably there are two options: `claude "$(pbpaste)"` (fragile with quotes/newlines) or pass inline via `shlex.quote`. We went with the second, with the clipboard as a safety net — if the terminal invocation fails, the user still has the prompt ready to paste manually.
+
+Same reasoning for Cowork: `open -a "Claude"` takes no text argument, so clipboard + manual ⌘V is the only path.
+
+---
+
+## Data model
+
+Three tables in `server/db.py:SCHEMA`.
+
+### `oportunidades` (one row per bookmark)
+
+| Column | Type | Notes |
 |--------|------|-------|
 | `id` | INT PK | autoincrement |
-| `link` | TEXT UNIQUE | chave lógica — URL do post no x.com |
-| `autor`, `handle`, `texto`, `data_bookmark`, `midia` | TEXT | metadados do tweet |
-| `categoria`, `prioridade`, `insight`, `acao_sugerida` | TEXT | output da triagem |
-| `vale_executar` | INT (0/1) | flag vinda do HTML |
+| `link` | TEXT UNIQUE | logical key — post URL on x.com |
+| `autor`, `handle`, `texto`, `data_bookmark`, `midia` | TEXT | tweet metadata |
+| `categoria`, `prioridade`, `insight`, `acao_sugerida` | TEXT | triage output |
+| `vale_executar` | INT (0/1) | flag coming from the HTML |
 | `status` | TEXT CHECK | `novo` \| `em_progresso` \| `executado` \| `arquivado` \| `descartado` |
-| `tipo_execucao` | TEXT | `claude` \| `cowork` \| NULL (decide pela heurística) |
-| `notas` | TEXT | anotação livre do usuário |
-| `instalado`, `aplicado`, `projeto_iniciado` | INT (0/1) | flags de progresso independentes |
+| `tipo_execucao` | TEXT | `claude` \| `cowork` \| NULL (falls back to heuristic) |
+| `notas` | TEXT | user free-form notes |
+| `instalado`, `aplicado`, `projeto_iniciado` | INT (0/1) | independent progress flags |
 | `created_at`, `updated_at` | TEXT | `updated_at` via trigger |
 
-### `execucoes` (log append-only)
+### `execucoes` (append-only log)
 
-Cada clique em **Executar** cria uma linha. Guarda `tipo`, `prompt` gerado, `projeto_path` (se criou pasta), `status` (`iniciada` → `concluida` \| `erro`) e um `log` textual com timestamps.
+Every **Execute** click creates a row. Stores `tipo`, generated `prompt`, `projeto_path` (if a folder was created), `status` (`iniciada` → `concluida` \| `erro`), and a textual `log` with timestamps.
 
-### `projetos` (pastas scaffoldadas)
+### `projetos` (scaffolded folders)
 
-Quando o usuário clica **+ Novo projeto**, o painel cria `<repo>/<slug>/` e registra aqui. `slug` é UNIQUE; colisões recebem sufixo numérico.
+When the user clicks **+ New project**, the panel creates `<repo>/<slug>/` and records it here. `slug` is UNIQUE; collisions get a numeric suffix.
 
----
-
-## API REST
-
-Todas as rotas retornam JSON. Estado dos cards é derivado da tabela `oportunidades`.
-
-Contrato resumido (formato completo no [README](README.md#api)):
-
-- `GET /api/stats` — contadores agregados pra header
-- `GET /api/oportunidades` — lista com filtros opcionais (`status`, `prioridade`, `categoria`)
-- `POST /api/oportunidades/<id>` — update parcial com allowlist de campos
-- `POST /api/oportunidades/<id>/executar` — dispatch: retorna `{ok, exec_id, tipo, projeto?, log}`
-- `POST /api/oportunidades/import` — re-lê o HTML
-
-O frontend usa polling de 60s (`setInterval(refresh, 60_000)`). Sem WebSocket, sem SSE — a frequência de edição é baixa e o cenário é single-user.
+> Field names stay in pt-BR to preserve the existing schema and API payload. If you want an English-aliased public API, open an issue.
 
 ---
 
-## Decisões explicitamente evitadas
+## REST API
 
-- **Autenticação**: não tem. O painel só escuta em `127.0.0.1`. Quem tem acesso ao Mac tem acesso aos cards.
-- **Multi-usuário**: não suportado. Uma instância, um usuário, um SQLite.
-- **Deploy remoto**: fora de escopo. O projeto é local-first por design.
-- **Upload/arrastar HTML**: o importador lê do disco. Se quiser automatizar, um cron ou o próprio pipeline de triagem escreve o HTML e chama `POST /api/oportunidades/import`.
-- **Tags livres / folksonomia**: `categoria` é uma coluna simples de string. Evitamos tabela `tags` + N:N porque o uso real não pediu.
+All routes return JSON. Card state is derived from the `oportunidades` table.
+
+Contract summary (full format in the [README](README.md#api)):
+
+- `GET /api/stats` — aggregate counters for the header.
+- `GET /api/oportunidades` — list with optional filters (`status`, `prioridade`, `categoria`).
+- `POST /api/oportunidades/<id>` — partial update with an allowlist of fields.
+- `POST /api/oportunidades/<id>/executar` — dispatch: returns `{ok, exec_id, tipo, projeto?, log}`.
+- `POST /api/oportunidades/import` — re-reads the HTML.
+
+The frontend uses 60s polling (`setInterval(refresh, 60_000)`). No WebSocket, no SSE — edit frequency is low and the scenario is single-user.
 
 ---
 
-## Evolução futura (hipótese)
+## Explicitly avoided
 
-- **Histórico filtrável** (já existe no DB, falta tela) — baixo esforço.
-- **Webhook de atualização** — quando o pipeline externo gerar HTML novo, chamar `POST /api/oportunidades/import` em vez de polling. Elimina latência de até 60s.
-- **Linux support** — substituir launchd por systemd, AppleScript por `xdotool`/`xclip`. Isolar o código macOS-específico num módulo `server/_macos.py`.
-- **Export** — endpoint `GET /api/oportunidades.csv` com streaming.
+- **Authentication**: none. The panel only listens on `127.0.0.1`. Whoever has access to the Mac has access to the cards.
+- **Multi-user**: unsupported. One instance, one user, one SQLite file.
+- **Remote deploy**: out of scope. Local-first by design.
+- **HTML upload / drag-drop**: the importer reads from disk. To automate, a cron or the triage pipeline itself writes the HTML and calls `POST /api/oportunidades/import`.
+- **Free-form tags / folksonomy**: `categoria` is a plain text column. We skipped a N:N `tags` table because real usage didn't demand it.
 
-Cada item só entra quando alguém tem o problema — não especulativamente.
+---
+
+## Possible evolution
+
+- **Filterable history** (DB is ready, screen is missing) — low effort.
+- **Update webhook** — when the external triage pipeline produces a new HTML, call `POST /api/oportunidades/import` instead of polling. Kills the up-to-60s staleness.
+- **Linux support** — swap launchd for systemd, AppleScript for `xdotool`/`xclip`. Isolate macOS-specific code into `server/_macos.py`.
+- **Export** — `GET /api/oportunidades.csv` with streaming.
+
+Each item only lands when someone actually has the problem — never speculatively.

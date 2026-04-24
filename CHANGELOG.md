@@ -1,33 +1,39 @@
 # Changelog
 
-Todas as mudanças notáveis deste projeto são documentadas aqui.
+All notable changes to this project are documented here.
 
-O formato segue [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/) e o projeto adere a [SemVer](https://semver.org/lang/pt-BR/).
+The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project adheres to [SemVer](https://semver.org/).
 
 ## [Unreleased]
+
+## [0.1.2] — 2026-04-24
+
+### Changed
+- `CLAUDE.md`, `DESIGN.md`, `CONTRIBUTING.md`, and `CHANGELOG.md` are now English-only (documentation canon). Portuguese documentation is reserved for `README.pt-BR.md`.
 
 ## [0.1.1] — 2026-04-24
 
 ### Changed
-- README.md agora é a versão em inglês (canonical, primeira impressão no GitHub).
-- Versão em português movida para `README.pt-BR.md`, linkada bidirecionalmente no topo de cada arquivo.
+- `README.md` is now the canonical English version (default landing on GitHub).
+- The Portuguese copy moved to `README.pt-BR.md` with bidirectional top-of-file links.
 
 ## [0.1.0] — 2026-04-24
 
 ### Added
-- Versão inicial open-source do painel.
-- Backend Flask 3 com rotas `/api/healthz`, `/api/stats`, `/api/oportunidades`, `/api/oportunidades/<id>/executar`, `/api/oportunidades/import`, `/api/projetos`.
-- Schema SQLite com três tabelas: `oportunidades`, `execucoes`, `projetos`. Migração idempotente.
-- UI single-page em HTML+CSS+JS vanilla: cards com prioridade/status/categoria, busca textual com debounce, filtros combinados, flags de progresso independentes (instalado / aplicado / projeto iniciado).
-- Heurística Claude×Cowork via keywords + categoria, com override manual pela UI ou API.
-- Botão **+ Novo projeto** cria pasta `<repo>/<slug>/`, escreve `README.md` + `CLAUDE.md`, roda `git init` e, se `gh` estiver autenticado, `gh repo create --private --push`.
-- Importer idempotente: lê array `BOOKMARKS` de `relatorio-bookmarks-x.html`, preserva campos editados no painel.
-- Scripts macOS: `setup.sh` idempotente, `install-launchd.sh` com templates plist, `healthcheck.sh` watchdog a cada 5min, `start.sh`/`stop.sh`.
-- Configuração por `.env` (porta, host, label prefix, app Cowork, caminho alternativo do HTML).
-- Exemplo em `examples/sample-relatorio.html` com dados sintéticos.
-- Documentação: `README.md`, `CLAUDE.md`, `DESIGN.md`, `CONTRIBUTING.md`.
-- `.gitignore` bloqueando dados do usuário (DB, HTML de triagem, logs, `.env`, `.venv`, capturas, análises de perfil, pastas geradas).
+- Initial open-source release of the panel.
+- Flask 3 backend with routes `/api/healthz`, `/api/stats`, `/api/oportunidades`, `/api/oportunidades/<id>/executar`, `/api/oportunidades/import`, `/api/projetos`.
+- SQLite schema with three tables: `oportunidades`, `execucoes`, `projetos`. Idempotent migration.
+- Single-page UI in vanilla HTML+CSS+JS: cards with priority/status/category, debounced text search, stacked filters, independent progress flags (instalado / aplicado / projeto iniciado).
+- Claude×Cowork heuristic via keyword + category scoring, with manual override from UI or API.
+- **+ New project** button creates `<repo>/<slug>/`, writes `README.md` + `CLAUDE.md`, runs `git init` and, if `gh` is authenticated, `gh repo create --private --push`.
+- Idempotent importer: reads the `BOOKMARKS` array from `relatorio-bookmarks-x.html`, preserves panel-edited fields.
+- macOS scripts: idempotent `setup.sh`, `install-launchd.sh` with plist templates, `healthcheck.sh` watchdog every 5 min, `start.sh` / `stop.sh`.
+- Configuration via `.env` (port, host, label prefix, Cowork app, alternate HTML path).
+- Example at `examples/sample-relatorio.html` with synthetic data.
+- Documentation: `README.md`, `CLAUDE.md`, `DESIGN.md`, `CONTRIBUTING.md`.
+- `.gitignore` blocking user data (DB, triage HTML, logs, `.env`, `.venv`, captures, profile analyses, generated folders).
 
-[Unreleased]: https://github.com/wesleysimplicio/x-bookmarks-panel/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/wesleysimplicio/x-bookmarks-panel/compare/v0.1.2...HEAD
+[0.1.2]: https://github.com/wesleysimplicio/x-bookmarks-panel/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/wesleysimplicio/x-bookmarks-panel/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/wesleysimplicio/x-bookmarks-panel/releases/tag/v0.1.0

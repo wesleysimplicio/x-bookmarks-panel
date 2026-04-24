@@ -1,25 +1,26 @@
-# Contribuindo
+# Contributing
 
-Obrigado por querer contribuir. Algumas regras pra manter o projeto simples e legível.
+Thanks for considering a contribution. A few rules to keep the project simple and readable.
 
-## Antes de mandar PR
+## Before opening a PR
 
-1. **Abra uma issue primeiro** se for mudança estrutural, adição de dependência nova, ou feature de escopo grande. Mudanças pequenas (typo, bug fix, edge case) podem vir direto como PR.
-2. **Leia o [DESIGN.md](DESIGN.md)** pra entender o que foi intencionalmente excluído. Propostas pra adicionar ORM, framework frontend, auth ou deploy remoto serão fechadas (lidas, apreciadas, mas fechadas).
-3. **Rode localmente**: `./setup.sh`, confirme que o painel sobe em `http://localhost:8765` e que `curl http://localhost:8765/api/healthz` devolve `{"ok": true}`.
+1. **Open an issue first** for structural changes, new dependencies, or large-scope features. Small changes (typo, bug fix, edge case) can come directly as a PR.
+2. **Read [DESIGN.md](DESIGN.md)** to understand what was intentionally left out. Proposals to add an ORM, a frontend framework, auth, or remote deploy will be closed (read, appreciated, but closed).
+3. **Run it locally**: `./setup.sh`, confirm the panel boots at `http://localhost:8765`, and that `curl http://localhost:8765/api/healthz` returns `{"ok": true}`.
 
-## Convenções
+## Conventions
 
-- **Python**: PEP 8, f-strings, `pathlib`, `from __future__ import annotations`, type hints onde agregam.
-- **Sem ORM.** SQLite direto em `server/db.py`.
-- **Sem framework frontend.** HTML + fetch em `index.html`.
-- **Comentários só quando o "por quê" não é óbvio no código.**
-- **Idempotência** em tudo que toca o SO.
-- **Commits** em inglês, imperativo, escopo curto: `feat: add export csv endpoint`, `fix: terminal escape when prompt has backticks`.
+- **Python**: PEP 8, f-strings, `pathlib`, `from __future__ import annotations`, type hints where they help.
+- **No ORM.** SQLite directly in `server/db.py`.
+- **No frontend framework.** HTML + fetch in `index.html`.
+- **Comments only when the "why" isn't obvious in the code.**
+- **Idempotency** for anything that touches the OS.
+- **Docs canon** (`README.md`, `CLAUDE.md`, `DESIGN.md`, `CONTRIBUTING.md`, `CHANGELOG.md`) are **English-only**. A Portuguese README mirror lives at `README.pt-BR.md`. Other translations are welcome as `<doc>.<lang>.md` siblings.
+- **Commits** in English, imperative, short scope: `feat: add export csv endpoint`, `fix: escape backticks in terminal prompt`.
 
-## Testando manualmente
+## Manual testing
 
-O projeto ainda não tem suite automatizada. Smoke test mínimo antes de PR:
+The project doesn't ship an automated test suite yet. Minimum smoke test before a PR:
 
 ```bash
 ./stop.sh
@@ -30,34 +31,34 @@ cp examples/sample-relatorio.html relatorio-bookmarks-x.html
 curl -X POST http://localhost:8765/api/oportunidades/import
 open http://localhost:8765
 
-# Validações:
-#   [ ] Painel abre e mostra 2 cards
-#   [ ] Busca com "/" funciona
-#   [ ] Filtros de prioridade/status/progresso reduzem os cards
-#   [ ] Clicar "Claude Code" copia prompt pro clipboard (testa ⌘V em algum editor)
-#   [ ] Clicar "+ Novo projeto" cria pasta em <repo>/<slug>/ e roda git init
-#   [ ] Re-importar HTML preserva status/tipo_execucao/notas editados
+# Checks:
+#   [ ] Panel opens and shows 2 cards
+#   [ ] Search with "/" works
+#   [ ] Priority/status/progress filters reduce the cards
+#   [ ] Clicking "Claude Code" puts the prompt on the clipboard (paste ⌘V in any editor)
+#   [ ] Clicking "+ New project" creates <repo>/<slug>/ and runs git init
+#   [ ] Re-importing the HTML preserves panel-edited status/tipo_execucao/notas
 ```
 
-## Escopo do projeto
+## Project scope
 
-**Dentro**: triagem local, UI simples, integração com Claude Code / Cowork / gh, launchd e sempre-online, SQLite.
+**In**: local triage, simple UI, integration with Claude Code / Cowork / gh, launchd always-on, SQLite.
 
-**Fora**: multi-usuário, deploy remoto, auth, sincronização em nuvem, mobile app, scraping do próprio x.com (use a API oficial ou o pipeline de sua preferência pra gerar o HTML).
+**Out**: multi-user, remote deploy, auth, cloud sync, mobile app, scraping x.com itself (use the official API or your own pipeline to produce the HTML).
 
-## Segurança
+## Security
 
-Se encontrar vulnerabilidade, **não abra issue pública**. Envie um e-mail para o autor (veja perfil GitHub). Foco em:
+If you find a vulnerability, **don't open a public issue**. Email the maintainer (see GitHub profile). Priorities:
 
-- Escape de prompt no `osascript` / `pbcopy`.
-- Validação de path ao criar projetos (prevenir path traversal via `slug`).
-- Qualquer vetor que permita RCE fora do cenário single-user esperado.
+- Prompt escaping in `osascript` / `pbcopy`.
+- Path validation when creating project folders (prevent slug-driven path traversal).
+- Any vector that enables RCE outside the expected single-user scenario.
 
-## Estilo de PR
+## PR style
 
-- Um PR, um escopo. Se encontrar dois bugs, manda dois PRs.
-- Descrição explica o **por quê** (não só o quê). Referencie a issue.
-- Antes/depois: se muda UI, cola screenshot ou gif. Se muda API, mostra request/response.
-- CHANGELOG.md recebe uma linha no topo de `[Unreleased]`.
+- One PR, one scope. If you find two bugs, send two PRs.
+- The description explains the **why**, not only the what. Reference the issue.
+- Before/after: for UI changes attach a screenshot or gif; for API changes show request/response.
+- `CHANGELOG.md` gets a new line at the top of `[Unreleased]`.
 
-Obrigado novamente — PRs bem descritos são metade do mérito.
+Thanks again — a well-described PR is half the work.

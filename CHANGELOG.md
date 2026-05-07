@@ -6,6 +6,19 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-05-07
+
+### Added
+- Adopted `agentic-starter` scaffold: `AGENTS.md`, `CLAUDE.md`, `.specs/{product,architecture,workflow,sprints}/`, `.skills/`, `.claude/{settings.json,hooks/}`, `.codex/config.toml`, `.github/{workflows/dod.yml,PULL_REQUEST_TEMPLATE.md,ISSUE_TEMPLATE/,copilot-instructions.md}`, `playwright.config.ts`, `presentation/`.
+- `VERSION` file as version source-of-truth.
+- `.specs/product/{VISION,DOMAIN,PERSONAS}.md` mapped to oportunidade, execucao, projeto, tipo_execucao, prioridade.
+- `.specs/architecture/{DESIGN,PATTERNS}.md` aligned with single-HTML/JS stack.
+- `.specs/sprints/BACKLOG.md` from real TODOs.
+
+### Changed
+- Bump VERSION 0.2.0 -> 0.3.0 (minor: structure added).
+- `AGENTS.md`/`CLAUDE.md`/`.github/copilot-instructions.md` aligned with real stack.
+
 ## [0.2.0] — 2026-04-24
 
 ### Added

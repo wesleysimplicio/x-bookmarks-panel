@@ -9,12 +9,43 @@ Tables:
 
 from __future__ import annotations
 
+import os
+import shutil
 import sqlite3
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Optional
 
-ROOT = Path(__file__).resolve().parent.parent
+
+def _resolve_root() -> Path:
+    env = os.environ.get("BOOKMARKS_ROOT")
+    if env:
+        root = Path(env).expanduser().resolve()
+        root.mkdir(parents=True, exist_ok=True)
+        (root / "data").mkdir(exist_ok=True)
+        _seed_static_assets(root)
+        return root
+    repo_root = Path(__file__).resolve().parent.parent
+    if (repo_root / "index.html").exists():
+        return repo_root
+    user_root = (Path.home() / ".x-bookmarks-panel").resolve()
+    user_root.mkdir(parents=True, exist_ok=True)
+    (user_root / "data").mkdir(exist_ok=True)
+    _seed_static_assets(user_root)
+    return user_root
+
+
+def _seed_static_assets(root: Path) -> None:
+    pkg_static = Path(__file__).resolve().parent / "static"
+    if not pkg_static.is_dir():
+        return
+    for asset in pkg_static.iterdir():
+        target = root / asset.name
+        if not target.exists():
+            shutil.copy2(asset, target)
+
+
+ROOT = _resolve_root()
 DATA_DIR = ROOT / "data"
 DB_PATH = DATA_DIR / "bookmarks.db"
 

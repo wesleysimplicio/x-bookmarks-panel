@@ -6,6 +6,20 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-05-08
+
+### Added
+- `pyproject.toml` (hatchling) declaring distribution name `x-bookmarks-panel`, console-script `bookmarks-panel = "bookmarks_panel.app:main"`, and runtime dep `flask>=3.0`.
+- `server/__init__.py` so the directory is recognized as a Python package; built wheel re-maps `server/` to import name `bookmarks_panel/` via `[tool.hatch.build.targets.wheel.sources]`.
+- Runtime root resolution in `server/db.py` (`_resolve_root` + `_seed_static_assets`): respects `BOOKMARKS_ROOT`, falls back to repo root when running from source, and seeds `~/.x-bookmarks-panel/` (with bundled `index.html` + `examples/sample-relatorio.html`) when installed via pip.
+- Distributed as a Python package on PyPI (`pip install x-bookmarks-panel`).
+
+### Changed
+- Bump VERSION 0.3.0 -> 0.4.0 (minor: PyPI distribution added).
+- `server/app.py`, `server/importer.py`, `server/executor.py` switched from sibling `import db/importer/executor` to relative imports (`from . import db, executor, importer`, `from .db import ...`) so the package works under `python -m bookmarks_panel.app`.
+- `start.sh` now runs `python -m bookmarks_panel.app` (was `cd server && python app.py`).
+- `setup.sh` installs the package itself via `pip install -e .` (was `pip install -r server/requirements.txt`) and initializes the DB via `from bookmarks_panel import db, importer`.
+
 ## [0.3.0] - 2026-05-07
 
 ### Added

@@ -18,16 +18,15 @@ python3 -m venv .venv
 # shellcheck disable=SC1091
 source .venv/bin/activate
 
-echo "→ Installing deps"
+echo "→ Installing deps (editable install of x-bookmarks-panel)"
 pip install --quiet --upgrade pip
-pip install --quiet -r server/requirements.txt
+pip install --quiet -e .
 
 echo "→ Init SQLite + import from HTML (if present)"
-cd server
-python -c "import db, importer; db.init_db()
+python -c "from bookmarks_panel import db, importer
+db.init_db()
 try: print(importer.import_html())
 except FileNotFoundError as e: print('(skip import)', e)"
-cd ..
 
 chmod +x start.sh stop.sh install-launchd.sh healthcheck.sh
 

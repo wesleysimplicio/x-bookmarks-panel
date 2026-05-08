@@ -28,7 +28,7 @@ import subprocess
 import unicodedata
 from pathlib import Path
 
-import db
+from . import db
 
 ROOT = db.ROOT
 COWORK_APP = os.environ.get("COWORK_APP", "Claude")

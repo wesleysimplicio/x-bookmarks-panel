@@ -29,7 +29,7 @@ import os
 import re
 from pathlib import Path
 
-from db import ROOT, init_db, upsert_oportunidade
+from .db import ROOT, init_db, upsert_oportunidade
 
 HTML_PATH = Path(os.environ.get("BOOKMARKS_HTML", ROOT / "relatorio-bookmarks-x.html"))
 

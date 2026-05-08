@@ -22,9 +22,7 @@ import os
 
 from flask import Flask, jsonify, request, send_from_directory
 
-import db
-import executor
-import importer
+from . import db, executor, importer
 
 PORT = int(os.environ.get("BOOKMARKS_PORT", "8765"))
 HOST = os.environ.get("BOOKMARKS_HOST", "127.0.0.1")

@@ -12,5 +12,4 @@ fi
 
 # shellcheck disable=SC1091
 source .venv/bin/activate
-cd server
-exec python app.py
+exec python -m bookmarks_panel.app

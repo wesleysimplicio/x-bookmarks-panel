@@ -6,6 +6,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 ## [Unreleased]
 
+### Added
+- `exports/skills-items.csv` and `exports/skills-items.md`: dump of opportunities flagged with Claude/AI skills (23 items — links, author, category, priority, status, insight, suggested action).
+
 ## [0.4.0] - 2026-05-08
 
 ### Added
